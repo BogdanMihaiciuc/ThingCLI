@@ -1,12 +1,12 @@
 # Intro
 
-A command line utility that makes it easier to work with the [Thingworx VSCode Project Template](https://github.com/ptc-iot-sharing/ThingworxVSCodeProject). Its purpose is to make it easer to update the project template by moving most files not directly related to the thingworx project itself into external dependencies. This way, whenever any improvements or bug fixes are made, developers will only need to update the dependencies and not do any changes to their actual project.
+A command line utility that makes it easier to work with the [Thingworx VSCode Project Template](https://github.com/BogdanMihaiciuc/ThingworxVSCodeProject). Its purpose is to make it easer to update the project template by moving most files not directly related to the thingworx project itself into external dependencies. This way, whenever any improvements or bug fixes are made, developers will only need to update the dependencies and not do any changes to their actual project.
 
 It includes the tasks that were previously defined in that project's `gulpfile` and will contain any future utilities.
 
 # Usage
 
-This is primarily meant to be used with a project based on the [Thingworx VSCode Project Template](https://github.com/ptc-iot-sharing/ThingworxVSCodeProject). It can also be used with an empty project to initialize a thingworx project in it.
+This is primarily meant to be used with a project based on the [Thingworx VSCode Project Template](https://github.com/BogdanMihaiciuc/ThingworxVSCodeProject). It can also be used with an empty project to initialize a thingworx project in it.
 
 To use it, run `npm install --save-dev bm-thing-cli` then run any of the available commands with `npx twc <command>`. Running the tool with no command will print out a message listing the available commands. Alternatively, you may install this globally via `npm install -g bm-thing-cli` which will allow you to use it outside of thingworx projects (for example to run the `init` command) and without the `npx` prefix.
 
