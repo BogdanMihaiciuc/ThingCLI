@@ -211,7 +211,7 @@ export async function init() {
         fs.writeFileSync(`${cwd}/.env`, envDefault(creationParameters));
 
         // If an app key authentication was selected, create an attach launch configuration
-        if ('appKey' in creationParameters) {
+        if ('thingworxAppKey' in creationParameters) {
             fs.mkdirSync(`${cwd}/.vscode`);
             fs.writeFileSync(`${cwd}/.vscode/launch.json`, JSON.stringify(launchConfigurationDefault(creationParameters), undefined, 4));
         }
@@ -414,7 +414,7 @@ function envDefault(args: CreationParameters): string {
         env += `THINGWORX_PASSWORD=${args.thingworxPassword}\n`;
     }
     else {
-        env += `THINGWORX_APP_KEY=${args.thingworxAppKey}`;
+        env += `THINGWORX_APPKEY=${args.thingworxAppKey}`;
     }
 
     return env;
