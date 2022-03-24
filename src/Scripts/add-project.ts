@@ -115,7 +115,7 @@ function tsConfigDefault() {
             ]
         },
         include: [
-            "../../static/**/*.d.ts",
+            "./static/**/*.d.ts",
             "./src/**/*.d.ts",
             "./src/**/*.ts",
             "../../tw_imports/**/*.d.ts",
