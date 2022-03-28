@@ -1,3 +1,9 @@
+# 1.0.3
+
+Resolves an issue with an improperly declared import that prevented building this project without a local copy of thing transformer.
+
+Resolves an issue that caused multiproject builds to fail on windows systems.
+
 # 1.0.2
 
 Resolves an issue where using the `init` command with an app key would cause an incorrect `.env` file to be generated and no debug launch configuraition to be created.
