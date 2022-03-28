@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { TWConfig } from '../../../ThingTransformer/dist/@types';
+import { TWConfig } from 'bm-thing-transformer';
 import { TSUtilities } from '../Utilities/TSUtilities';
 import { TWClient } from '../Utilities/TWClient';
 
