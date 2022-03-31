@@ -53,7 +53,10 @@ async function main() {
         // The following 2 commands run a very similar sequence of steps
         case Commands.upload:
         case Commands.deploy:
-            await incrementVersion();
+            // If the argument is present, don't increment the version 
+            if (!args.includes('--retainVersion')) {
+                await incrementVersion();
+            }
             await declarations();
             const endpoints = await build();
             await zip();
