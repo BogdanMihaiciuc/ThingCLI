@@ -53,7 +53,10 @@ async function main() {
         // The following 2 commands run a very similar sequence of steps
         case Commands.upload:
         case Commands.deploy:
-            await incrementVersion();
+            // If the argument is present, don't increment the version 
+            if (!args.includes('--retainVersion')) {
+                await incrementVersion();
+            }
             await declarations();
             const endpoints = await build();
             await zip();
@@ -97,13 +100,13 @@ else {
 bm-thing-cli <command> [--argument] ...
 
 Available commands:
- * \x1b[1mdeclarations\x1b[0m                                           Builds the collection declarations
- * \x1b[1mwatch\x1b[0m                                                  Watches the source folder and runs declarations on any change
- * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug]                Builds the thingworx extension
- * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--remove]    Builds and uploads the thingworx extension
- * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--remove]    Uploads the extension then runs deployment scripts
- * \x1b[1mremove\x1b[0m [--merged] [--separate]                         Removes the thingworx extension
- * \x1b[1madd-project\x1b[0m                                            Adds a new project to the repository
- * \x1b[1minit\x1b[0m                                                   Initializes a thingworx project in an empty folder
- * \x1b[1mupgrade\x1b[0m                                                Upgrades from a gulp project to a twc project`);
+ * \x1b[1mdeclarations\x1b[0m                                                            Builds the collection declarations
+ * \x1b[1mwatch\x1b[0m                                                                   Watches the source folder and runs declarations on any change
+ * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug]                                 Builds the thingworx extension
+ * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retainVersion]   Builds and uploads the thingworx extension
+ * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retainVersion]   Uploads the extension then runs deployment scripts
+ * \x1b[1mremove\x1b[0m [--merged] [--separate]                                          Removes the thingworx extension
+ * \x1b[1madd-project\x1b[0m                                                             Adds a new project to the repository
+ * \x1b[1minit\x1b[0m                                                                    Initializes a thingworx project in an empty folder
+ * \x1b[1mupgrade\x1b[0m                                                                 Upgrades from a gulp project to a twc project`);
 }
