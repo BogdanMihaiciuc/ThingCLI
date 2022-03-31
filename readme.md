@@ -130,6 +130,10 @@ ThingCLI
 
 To build the project, run `npm run build` in the root of the project. This will generate the appropriate files in the `dist` folder.
 
+### Contributors
+
+ - [stefan-lacatus](https://github.com/stefan-lacatus): retainVersion argument
+
 #  License
 
 [MIT License](LICENSE)

@@ -1,3 +1,7 @@
+# 1.0.4
+
+Added a `retainVersion` argument for the `upload` and `deploy` command to prevent automatic version increase.
+
 # 1.0.3
 
 Resolves an issue with an improperly declared import that prevented building this project without a local copy of thing transformer.
