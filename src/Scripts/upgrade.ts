@@ -1,7 +1,7 @@
 import Enquirer from 'enquirer';
 import * as fs from 'fs';
 import { spawn } from 'child_process';
-import { twConfigDefault } from './init';
+import { twConfigDefault, twConfigMethodHelperDefaults } from './init';
 
 /**
  * An array containing the files that need to be removed in order to upgrade.
@@ -52,6 +52,16 @@ export async function upgrade() {
             name: 'projectName',
             message: 'Enter the name to use for your thingworx project:'
         });
+    }
+
+    // Handle any updates to the twconfig, like extra functionalities
+    if(hasTwConfig) {
+        const currentTwConfig = JSON.parse(fs.readFileSync(`${cwd}/twconfig.json`, 'utf-8'));
+        // Add the method helpers options
+        if(!currentTwConfig.methodHelpers) {
+            currentTwConfig.methodHelpers = twConfigMethodHelperDefaults();
+        }
+        fs.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(currentTwConfig, undefined, 4));
     }
 
     // Explain what this does and ask the user if they want to continue

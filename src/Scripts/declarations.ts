@@ -31,6 +31,22 @@ export function declarations() {
         // Accumulate the declarations into a single file
         let declarations = '';
         
+        // TODO: on in multi-project mode, this declarations need to be generated only once
+        if (twConfig.methodHelpers) {
+            if(twConfig.methodHelpers.methodName) {
+                declarations += `\n/**\n * Contains the name of the service or subscription being executed\n */\ndeclare const METHOD_NAME: string;\n`;
+            }
+            if(twConfig.methodHelpers.className) {
+                declarations += `\n/**\n * Contains the name of the typescript class this service is a part of\n */\ndeclare const CLASS_NAME: string;\n`;
+            }
+            if(twConfig.methodHelpers.filePath) {
+                declarations += `\n/**\n * Contains the relative file path of the to the file that contains this service\n */\ndeclare const FILE_PATH: string;\n`;
+            }
+            if(twConfig.methodHelpers.logPrefix) {
+                declarations += `\n/**\n * Prefix that can be used in all log messages to identify the message source \n */\ndeclare const LOG_PREFIX: string;\n`;
+            }
+        }
+        
         for (const key in twConfig.store) {
             if (key == '@globalBlocks') continue;
             const entity = twConfig.store[key];
