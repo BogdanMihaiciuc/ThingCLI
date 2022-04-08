@@ -115,7 +115,7 @@ function tsConfigDefault() {
             ]
         },
         include: [
-            "../Generated.d.ts",
+            "../static/gen/Generated.d.ts",
             "./static/**/*.d.ts",
             "./src/**/*.d.ts",
             "./src/**/*.ts",

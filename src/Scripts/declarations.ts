@@ -64,7 +64,8 @@ export function declarations() {
     const cwd = process.cwd();
     
     if (twConfig.projectName == '@auto') {
-        fs.writeFileSync(`${cwd}/src/Generated.d.ts`, getMethodHelperDeclarations());
+        TSUtilities.ensurePath(`${cwd}/src/static/gen`, cwd);
+        fs.writeFileSync(`${cwd}/src/static/gen/Generated.d.ts`, getMethodHelperDeclarations());
         // If running in multi-project mode, run against each project separately
         TSUtilities.projects().forEach(p => {
             emitDeclarationsOfProject(p.path);
