@@ -1,3 +1,9 @@
+# 1.1
+
+Adds support for generating method helpers, that are useful variables that can be used for logging. The following variables can be enabled: `METHOD_NAME`, `CLASS_NAME`, `FILE_PATH` and `LOG_PREFIX`. ([stefan-lacatus](https://github.com/stefan-lacatus))
+
+Resolves an issue where, on windows systems, the declarations generated via the watch command would trigger a new declaration generation leading to a loop.
+
 # 1.0.4
 
 Added a `retainVersion` argument for the `upload` and `deploy` command to prevent automatic version increase.
