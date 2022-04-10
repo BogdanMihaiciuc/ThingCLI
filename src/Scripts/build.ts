@@ -121,7 +121,7 @@ export async function build(): Promise<string[]> {
 
         // Write out the entity XML files
         for (const key in twConfig.store) {
-            if (key == '@globalBlocks') continue;
+            if (key.startsWith('@')) continue;
 
             // Write the entity XML
             const transformer = twConfig.store[key];

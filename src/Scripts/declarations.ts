@@ -51,7 +51,8 @@ export function declarations() {
         let declarations = twConfig.projectName != '@auto' ? getMethodHelperDeclarations() : '';
         
         for (const key in twConfig.store) {
-            if (key == '@globalBlocks') continue;
+            // Keys starting with @ are non-entity entries
+            if (key.startsWith('@')) continue;
             const entity = twConfig.store[key];
             declarations += `\n${entity.toDeclaration()}\n`;
         }
