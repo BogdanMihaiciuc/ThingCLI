@@ -1,3 +1,7 @@
+# 1.2
+
+Adds support for thing transformer v0.22.
+
 # 1.1
 
 Adds support for generating method helpers, that are useful variables that can be used for logging. The following variables can be enabled: `METHOD_NAME`, `CLASS_NAME`, `FILE_PATH` and `LOG_PREFIX`. ([stefan-lacatus](https://github.com/stefan-lacatus))
