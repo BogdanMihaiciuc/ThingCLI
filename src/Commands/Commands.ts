@@ -10,6 +10,11 @@ export const enum Commands {
     declarations = 'declarations',
 
     /**
+     * The declarations command that builds the thingworx collection declarations.
+     */
+    exposedApi = 'exposedApi',
+
+    /**
      * The watch command that monitors files and triggers the declarations command whenever
      * anything changes.
      */

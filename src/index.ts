@@ -12,6 +12,7 @@ import { addProject } from './Scripts/add-project';
 import { install } from './Scripts/install';
 import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
+import { exposedApi } from './Scripts/generateApiDeclarations';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
 
@@ -84,6 +85,9 @@ async function main() {
             break;
         case Commands.upgrade:
             await upgrade();
+            break;
+        case Commands.exposedApi:
+            await exposedApi();
             break;
         default:
             console.error(`Unknown command "${command}" specified.`);
