@@ -32,7 +32,7 @@ async function main() {
 
                 // Don't process this if it's a change to the static directory, which is generated
                 // by the declarations command
-                if (filename.match(/(.*)[\/\\]static[\/\\]gen[\/\\]Generated\.d\.ts$/)) return;
+                if (filename.match(/(.*)[\/\\]?static[\/\\]gen[\/\\]Generated\.d\.ts$/)) return;
 
                 // In certain cases the callback is invoked twice, so wait for a short while before running to avoid this
                 declarationsRunning = true;
