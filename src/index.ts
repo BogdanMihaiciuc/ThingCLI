@@ -12,7 +12,7 @@ import { addProject } from './Scripts/add-project';
 import { install } from './Scripts/install';
 import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
-import { generateAPI } from './Scripts/generateAPI';
+import { generateAPI } from './Scripts/generate-api';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
 
