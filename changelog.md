@@ -2,6 +2,8 @@
 
 Adds support for thing transformer v0.22.
 
+Adds a `generate-api` command that generates an API declarations file that can be consumed by a separate frontend or node project. ([stefan-lacatus](https://github.com/stefan-lacatus))
+
 # 1.1.1
 
 Resolves an issue where, with certain configurations, the declarations generated via the watch command would trigger a new declaration generation leading to a loop.
