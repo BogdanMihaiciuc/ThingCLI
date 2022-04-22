@@ -32,7 +32,7 @@ export function generateAPI() {
     let declarations = "import { ServiceResult, INFOTABLE, NOTHING, NUMBER, STRING, INTEGER } from './global';\n";
     
     for (const key in twConfig.store) {
-        if (key == '@globalBlocks') continue;
+        if (key.startsWith('@')) continue;
         const entity = twConfig.store[key];
         declarations += `\n${entity.toAPIDeclaration()}\n`;
     }
