@@ -7,7 +7,7 @@ import { TSUtilities } from '../Utilities/TSUtilities';
  */
 export function declarations() {
 
-    // Load the twconfig file which contains complication options.
+    // Load the twconfig file which contains compilation options.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
     process.stdout.write(`\x1b[2m❯\x1b[0m Building declarations`);
