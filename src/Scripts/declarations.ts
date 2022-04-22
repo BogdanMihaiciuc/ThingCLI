@@ -7,7 +7,7 @@ import { TSUtilities } from '../Utilities/TSUtilities';
  */
 export function declarations() {
 
-    // Load the twconfig file which contains complication options.
+    // Load the twconfig file which contains compilation options.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
     process.stdout.write(`\x1b[2m❯\x1b[0m Building declarations`);
@@ -51,7 +51,8 @@ export function declarations() {
         let declarations = twConfig.projectName != '@auto' ? getMethodHelperDeclarations() : '';
         
         for (const key in twConfig.store) {
-            if (key == '@globalBlocks') continue;
+            // Keys starting with @ are non-entity entries
+            if (key.startsWith('@')) continue;
             const entity = twConfig.store[key];
             declarations += `\n${entity.toDeclaration()}\n`;
         }

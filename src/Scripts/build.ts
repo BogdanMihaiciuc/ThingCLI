@@ -18,7 +18,7 @@ export async function build(): Promise<string[]> {
     // The array of deployment endpoints discovered while building
     const deploymentEndpoints: string[] = [];
 
-    // Load the twconfig file which contains complication options.
+    // Load the twconfig file which contains compilation options.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
     const packageJSON = require(`${process.cwd()}/package.json`);
 
@@ -121,7 +121,7 @@ export async function build(): Promise<string[]> {
 
         // Write out the entity XML files
         for (const key in twConfig.store) {
-            if (key == '@globalBlocks') continue;
+            if (key.startsWith('@')) continue;
 
             // Write the entity XML
             const transformer = twConfig.store[key];
