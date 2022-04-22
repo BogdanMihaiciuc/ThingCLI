@@ -1,3 +1,7 @@
+# 1.2
+
+Adds support for thing transformer v0.22.
+
 # 1.1.1
 
 Resolves an issue where, with certain configurations, the declarations generated via the watch command would trigger a new declaration generation leading to a loop.
