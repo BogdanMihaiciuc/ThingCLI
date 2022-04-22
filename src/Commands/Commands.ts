@@ -12,7 +12,7 @@ export const enum Commands {
     /**
      * The declarations command that builds the thingworx collection declarations.
      */
-    exposedApi = 'exposedApi',
+    generateAPI = 'generate-api',
 
     /**
      * The watch command that monitors files and triggers the declarations command whenever
