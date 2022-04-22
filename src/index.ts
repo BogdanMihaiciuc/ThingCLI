@@ -55,7 +55,7 @@ async function main() {
         case Commands.upload:
         case Commands.deploy:
             // If the argument is present, don't increment the version 
-            if (!args.includes('--retainVersion')) {
+            if (!args.includes('--retainVersion') && !args.includes('--retain-version')) {
                 await incrementVersion();
             }
             await declarations();
@@ -107,8 +107,8 @@ Available commands:
  * \x1b[1mdeclarations\x1b[0m                                                            Builds the collection declarations
  * \x1b[1mwatch\x1b[0m                                                                   Watches the source folder and runs declarations on any change
  * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug]                                 Builds the thingworx extension
- * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retainVersion]   Builds and uploads the thingworx extension
- * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retainVersion]   Uploads the extension then runs deployment scripts
+ * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retain-version]  Builds and uploads the thingworx extension
+ * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retain-version]  Uploads the extension then runs deployment scripts
  * \x1b[1mremove\x1b[0m [--merged] [--separate]                                          Removes the thingworx extension
  * \x1b[1madd-project\x1b[0m                                                             Adds a new project to the repository
  * \x1b[1minit\x1b[0m                                                                    Initializes a thingworx project in an empty folder
