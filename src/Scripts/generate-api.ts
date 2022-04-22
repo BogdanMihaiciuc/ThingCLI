@@ -20,7 +20,7 @@ export function generateAPI() {
     // Create a new store for each project
     twConfig.store = {};
 
-    // Create the typescript project and emit using a "watch" transformer
+    // Create the typescript project and emit using a transformer
     const program = TSUtilities.programWithPath(cwd);
     program.emit(undefined, () => {}, undefined, undefined, {
         before: [
@@ -41,5 +41,5 @@ export function generateAPI() {
     TSUtilities.ensurePath(`${cwd}/api`, cwd);
     fs.writeFileSync(`${cwd}/api/Generated.d.ts`, declarations);
 
-    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Built exported API  \n`);
+    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Built exported API   \n`);
 }
