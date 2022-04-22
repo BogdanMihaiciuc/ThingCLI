@@ -46,18 +46,18 @@ Arguments:
 ## `upload`
 Usage:
 ```bash
-npx twc upload [--merged|--separate] [--debug] [--remove] [--retainVersion]
+npx twc upload [--merged|--separate] [--debug] [--remove] [--retain-version]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json.
 Arguments:
  - `--remove`: If specified, the current version of the extension(s) will be removed prior to installing the new version.
- - `--retainVersion`: If specified, the version of the extension(s) in the `package.json` is not incremented. Useful if the version is driven out of external tools
+ - `--retain-version`: If specified, the version of the extension(s) in the `package.json` is not incremented. Useful if the version is driven out of external tools
 
 ## `deploy`
 Usage:
 ```bash
-npx twc deploy [--merged|--separate] [--debug] [--remove] [--retainVersion]
+npx twc deploy [--merged|--separate] [--debug] [--remove] [--retain-version]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json. After the installation is complete, it runs the services marked with the `@deploy` decorator.
@@ -132,7 +132,7 @@ To build the project, run `npm run build` in the root of the project. This will 
 
 ### Contributors
 
- - [stefan-lacatus](https://github.com/stefan-lacatus): retainVersion argument, method helpers
+ - [stefan-lacatus](https://github.com/stefan-lacatus): retainVersion argument, method helpers, generate-api command
 
 #  License
 

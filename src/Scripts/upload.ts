@@ -11,7 +11,7 @@ const [, , , ...args] = process.argv;
 export async function upload(): Promise<void> {
     const cwd = process.cwd();
 
-    // Load the twconfig file which contains complication options.
+    // Load the twconfig file which contains compilation options.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
     // When running separate in multi project mode, the zip files have to be imported
