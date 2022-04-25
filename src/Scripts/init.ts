@@ -305,6 +305,7 @@ function packageDefault(args: CreationParameters) {
  */
 export function twConfigDefault(projectName: string) {
     return {
+        "$schema": "https://bogdanmihaiciuc.com/twconfig.schema.json",
         experimentalGlobals: false,
         projectName,
         generateProjectEntity: true,
