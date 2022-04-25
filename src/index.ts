@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Commands } from './Commands/Commands';
-import { incrementVersion } from './Scripts/incrementVersion';
+import { incrementVersion } from './Scripts/increment-version';
 import { declarations } from './Scripts/declarations';
 import { build } from './Scripts/build';
 import { zip } from './Scripts/zip';
