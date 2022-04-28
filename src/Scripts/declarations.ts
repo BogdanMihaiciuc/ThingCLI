@@ -1,5 +1,6 @@
 import { TWThingTransformerFactory, TWConfig } from 'bm-thing-transformer';
 import * as fs from 'fs';
+import * as ts from 'typescript';
 import { TSUtilities } from '../Utilities/TSUtilities';
 
 /**
@@ -41,11 +42,10 @@ export function declarations() {
     
         // Create the typescript project and emit using a "watch" transformer
         const program = TSUtilities.programWithPath(path);
-        program.emit(undefined, () => {}, undefined, undefined, {
-            before: [
-                TWThingTransformerFactory(program, path, false, true, twConfig)
-            ]
-        });
+        const tsFiles = program.getSourceFiles().filter(file => !file.fileName.endsWith('.d.ts'));
+        for (const file of tsFiles) {
+            ts.transform(file, [TWThingTransformerFactory(program, path, false, true, twConfig)], program.getCompilerOptions());
+        }
     
         // Accumulate the declarations into a single file
         let declarations = twConfig.projectName != '@auto' ? getMethodHelperDeclarations() : '';

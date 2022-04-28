@@ -1,3 +1,9 @@
+# 1.3
+
+Adds a schema to newly created `twconfig.json` files.
+
+Improved the speed of generating declarations and API exports by removing the standard typescript transformations which are discarded for these processes anyway.
+
 # 1.2
 
 Adds support for thing transformer v0.22.
