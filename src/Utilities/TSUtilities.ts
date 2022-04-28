@@ -66,8 +66,10 @@ export class TSUtilities {
             config.options.noEmitOnError = true;
         }
 
+        const host = ts.createCompilerHost(config.options, true);
+
         // Create the typescript project
-        return ts.createProgram({options: config.options, rootNames: config.fileNames, configFileParsingDiagnostics: config.errors});
+        return ts.createProgram({options: config.options, rootNames: config.fileNames, configFileParsingDiagnostics: config.errors, host});
     }
 
     /**
