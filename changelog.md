@@ -1,3 +1,7 @@
+# 1.2.1
+
+Updates thing transformer to v0.22.1 which resolves an issue that caused global functions to not be inlined when compiling on windows systems.
+
 # 1.2
 
 Adds support for thing transformer v0.22.
