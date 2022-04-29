@@ -27,7 +27,7 @@
     },
     "dependencies": {
         "adm-zip": "0.5.9",
-        "bm-thing-transformer": "0.22.0-beta.1",
+        "bm-thing-transformer": "0.22.1-beta.1",
         "dotenv": "^16.0.0",
         "enquirer": "^2.3.6",
         "typescript": "4.6.3",
