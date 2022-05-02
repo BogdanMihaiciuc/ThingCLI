@@ -305,6 +305,7 @@ function packageDefault(args: CreationParameters) {
  */
 export function twConfigDefault(projectName: string) {
     return {
+        "$schema": "https://bogdanmihaiciuc.com/twconfig.schema.json",
         experimentalGlobals: false,
         projectName,
         generateProjectEntity: true,
@@ -349,6 +350,7 @@ function tsConfigDefault() {
             target: "es5",
             downlevelIteration: true,
             experimentalDecorators: true,
+            noImplicitOverride: true,
             strict: true,
             declaration: true,
             lib: [
