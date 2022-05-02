@@ -2,6 +2,8 @@
 
 Adds a schema to newly created `twconfig.json` files.
 
+Newly created projects now have the `noImplicitOverride` set to `true` in `tsconfig.json`.
+
 Improved the speed of generating declarations and API exports by removing the standard typescript transformations which are discarded for these processes anyway.
 
 # 1.2.1
