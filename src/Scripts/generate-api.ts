@@ -1,5 +1,6 @@
 import { TWThingTransformerFactory, TWConfig } from 'bm-thing-transformer';
 import * as fs from 'fs';
+import * as ts from 'typescript';
 import { TSUtilities } from '../Utilities/TSUtilities';
 
 /**
@@ -22,11 +23,10 @@ export function generateAPI() {
 
     // Create the typescript project and emit using a transformer
     const program = TSUtilities.programWithPath(cwd);
-    program.emit(undefined, () => {}, undefined, undefined, {
-        before: [
-            TWThingTransformerFactory(program, cwd, false, false, twConfig)
-        ],
-    });
+    const tsFiles = program.getSourceFiles().filter(file => !file.fileName.endsWith('.d.ts'));
+    for (const file of tsFiles) {
+        ts.transform(file, [TWThingTransformerFactory(program, cwd, false, false, twConfig)], program.getCompilerOptions());
+    }
 
     // Accumulate the declarations into a single file
     let declarations = "import { ServiceResult, INFOTABLE, NOTHING, NUMBER, STRING, INTEGER } from './global';\n";
