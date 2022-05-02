@@ -1,4 +1,4 @@
-import { TWThingTransformerFactory, TWConfig, TWThingTransformer } from 'bm-thing-transformer';
+import { TWThingTransformerFactory, TWConfig, TWThingTransformer, DiagnosticMessageKind, DiagnosticMessage } from 'bm-thing-transformer';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import { Builder, parseStringPromise } from 'xml2js';
@@ -115,6 +115,34 @@ export async function build(): Promise<string[]> {
             throw new Error('Compilation failed.');
         }
 
+        // Validate thingworx-specific constraints
+        for (const key in twConfig.store) {
+            if (key.startsWith('@')) continue;
+
+            const transformer = twConfig.store[key];
+            transformer.validateConstraints();
+        }
+
+        const diagnosticMessages = twConfig.store['@diagnosticMessages'] as unknown as DiagnosticMessage[];
+
+        // If any errors were reported, display them and fail
+        if (diagnosticMessages.some(m => m.kind == DiagnosticMessageKind.Error)) {
+            process.stdout.write(`\r\x1b[1;31m✖\x1b[0m Failed building ${projectName || 'project'}\n`);
+
+            for (const message of diagnosticMessages) {
+                switch (message.kind) {
+                    case DiagnosticMessageKind.Error:
+                        console.log(`🛑 \x1b[1;31mError\x1b[0m ${message.message}`);
+                        break;
+                    case DiagnosticMessageKind.Warning:
+                        console.log(`🔶 \x1b[1;33mWarning\x1b[0m ${message.message}`);
+                        break;
+                }
+            }
+
+            throw new Error('Validation failed.');
+        }
+
         // Store an array of all transformers created, to be used to extract
         // debug information for the whole project
         const transformers: TWThingTransformer[] = [];
@@ -187,6 +215,11 @@ export async function build(): Promise<string[]> {
         // Write out the diagnostic messages at the end of the task
         if (formattedDiagnostics) {
             console.log(formattedDiagnostics);
+        }
+
+        // If any validation errors were reported, display them at the end of the task
+        for (const message of diagnosticMessages) {
+            console.log(`🔶 \x1b[1;33mWarning\x1b[0m ${message.message}`);
         }
     }
 

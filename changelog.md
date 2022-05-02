@@ -8,6 +8,10 @@ Improved the speed of generating declarations and API exports by removing the st
 
 Adds support for generating static field definitions objects and a function to create an infotable given an array of row objects and a data shape name when generating an API declarations file, to be used when invoking thingworx endpoints. ([stefan-lacatus](https://github.com/stefan-lacatus))
 
+Adds support for running an additional set of validations when building projects. Classes will now be checked for incorrectly overriding members of their bases classes when possible.
+
+Adds support for displaying warning messages reported by the transformer when building projects.
+
 # 1.2.1
 
 Updates thing transformer to v0.22.1 which resolves an issue that caused global functions to not be inlined when compiling on windows systems.
