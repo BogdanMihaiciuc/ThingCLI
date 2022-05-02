@@ -350,6 +350,7 @@ function tsConfigDefault() {
             target: "es5",
             downlevelIteration: true,
             experimentalDecorators: true,
+            noImplicitOverride: true,
             strict: true,
             declaration: true,
             lib: [

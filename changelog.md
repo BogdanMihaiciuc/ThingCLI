@@ -2,9 +2,15 @@
 
 Adds a schema to newly created `twconfig.json` files.
 
+Newly created projects now have the `noImplicitOverride` set to `true` in `tsconfig.json`.
+
 Improved the speed of generating declarations and API exports by removing the standard typescript transformations which are discarded for these processes anyway.
 
 Adds support for generating static field definitions objects and a function to create an infotable given an array of row objects and a data shape name when generating an API declarations file, to be used when invoking thingworx endpoints. ([stefan-lacatus](https://github.com/stefan-lacatus))
+
+Adds support for running an additional set of validations when building projects. Classes will now be checked for incorrectly overriding members of their bases classes when possible.
+
+Adds support for displaying warning messages reported by the transformer when building projects.
 
 # 1.2.1
 
