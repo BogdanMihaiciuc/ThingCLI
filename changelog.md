@@ -4,6 +4,8 @@ Adds a schema to newly created `twconfig.json` files.
 
 Improved the speed of generating declarations and API exports by removing the standard typescript transformations which are discarded for these processes anyway.
 
+Adds support for generating static field definitions objects and a function to create an infotable given an array of row objects and a data shape name when generating an API declarations file, to be used when invoking thingworx endpoints. ([stefan-lacatus](https://github.com/stefan-lacatus))
+
 # 1.2.1
 
 Updates thing transformer to v0.22.1 which resolves an issue that caused global functions to not be inlined when compiling on windows systems.
