@@ -30,7 +30,7 @@ export function generateAPI() {
     }
 
     // Accumulate the declarations into a single file
-    let declarations = "import { ServiceResult, DATETIME, JSON INFOTABLE, NOTHING, NUMBER, STRING, INTEGER, BOOLEAN, TWJSON, LOCATION, IMAGE, HYPERLINK, PASSWORD, TEXT, HTML, GUID, BLOB, LONG, THINGNAME } from './global';\n";
+    let declarations = "import { ServiceResult, DATETIME, JSON, INFOTABLE, NOTHING, NUMBER, STRING, INTEGER, BOOLEAN, TWJSON, LOCATION, IMAGE, HYPERLINK, PASSWORD, TEXT, HTML, GUID, BLOB, LONG, THINGNAME } from './global';\n";
     let runtime = "const DataShapesDefinitions = { ";
     
     for (const key in twConfig.store) {
