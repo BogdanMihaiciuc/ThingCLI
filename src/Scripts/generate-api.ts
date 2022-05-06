@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as ts from 'typescript';
 import { TSUtilities } from '../Utilities/TSUtilities';
 import { APIGenerator } from '../Utilities/APIDeclarationGenerator';
+import { firePostTransformActions } from '../Utilities/TransformerUtilities';
 
 /**
  * Creates a typescript declarations file for the exported types, to be consumed in a frontend or node project.
@@ -14,7 +15,7 @@ export function generateAPI() {
     const twConfig = require(`${cwd}/twconfig.json`) as TWConfig;
 
     process.stdout.write(`\x1b[1;31m✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖\x1b[0m\n`);
-    process.stdout.write(`\x1b[1;31m✖✖✖✖✖✖✖\x1b[0m Building exported APIs is considered experimental and subject to change \x1b[1;31m✖✖✖✖✖✖✖\x1b[0m\n`);
+    process.stdout.write(`\x1b[1;31m✖✖✖✖✖✖✖\x1b[0m Building exported APIs is considered experimental and subject to change \x1b[1;31m✖✖✖✖✖✖\x1b[0m\n`);
     process.stdout.write(`\x1b[1;31m✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖✖\x1b[0m\n`);
 
     process.stdout.write(`\x1b[2m❯\x1b[0m Building exported API`);
@@ -30,8 +31,9 @@ export function generateAPI() {
     }
 
     // Accumulate the declarations into a single file
-    let declarations = "import { ServiceResult, DATETIME, JSON INFOTABLE, NOTHING, NUMBER, STRING, INTEGER, BOOLEAN, TWJSON, LOCATION, IMAGE, HYPERLINK, PASSWORD, TEXT, HTML, GUID, BLOB, LONG, THINGNAME } from './global';\n";
-    let runtime = "const DataShapesDefinitions = { ";
+    let declarations = "import { ServiceResult, DATETIME, JSON, INFOTABLE, NOTHING, NUMBER, STRING, INTEGER, BOOLEAN, TWJSON, LOCATION, IMAGE, HYPERLINK, PASSWORD, TEXT, HTML, GUID, BLOB, LONG, THINGNAME, IMAGE, IMAGELINK, GUID } from './global';\n";
+    let runtime = "import { FieldDefinitionBase, INFOTABLE } from './global';\n" +
+                + "const DataShapesDefinitions = { ";
     
     for (const key in twConfig.store) {
         if (key.startsWith('@')) continue;
@@ -56,6 +58,8 @@ export function generateAPI() {
             }
         }
     }
+
+    firePostTransformActions(program, twConfig.store, twConfig.projectName);
 
     runtime += "}\n";
     runtime += `
