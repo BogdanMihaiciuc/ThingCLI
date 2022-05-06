@@ -1,3 +1,5 @@
+Resolves an issue that broke the `generate-api` command.
+
 # 1.3.1
 
 Updates to thing transformer 1.3.1 which resolves an issue where inline SQL statements would compile into code with syntax errors.
