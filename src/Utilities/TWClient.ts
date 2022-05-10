@@ -246,7 +246,7 @@ export class TWClient {
         // Set the appropriate authorization header
         this._authorizeRequest(requestOptions);
 
-        const client = requestOptions.protocol == 'https' ? https : http;
+        const client = requestOptions.protocol == 'https:' ? https : http;
 
         // Create and wait for the request to finish
         return await new Promise((resolve, reject) => {
