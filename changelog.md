@@ -1,3 +1,5 @@
+# 1.4.0
+
 Resolves an issue that broke the `generate-api` command.
 
 # 1.3.1
