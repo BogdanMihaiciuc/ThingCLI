@@ -120,7 +120,7 @@ export async function build(): Promise<string[]> {
             if (key.startsWith('@')) continue;
 
             const transformer = twConfig.store[key];
-            transformer.validateConstraints();
+            transformer.firePostTransformActions();
         }
 
         const diagnosticMessages = twConfig.store['@diagnosticMessages'] as unknown as DiagnosticMessage[];

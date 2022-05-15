@@ -30,20 +30,24 @@ export function generateAPI() {
     }
 
     // Accumulate the declarations into a single file
-    let declarations = "import { ServiceResult, DATETIME, JSON INFOTABLE, NOTHING, NUMBER, STRING, INTEGER, BOOLEAN, TWJSON, LOCATION, IMAGE, HYPERLINK, PASSWORD, TEXT, HTML, GUID, BLOB, LONG, THINGNAME } from './global';\n";
+    let declarations = "import { ServiceResult, DATETIME, JSON, INFOTABLE, NOTHING, NUMBER, STRING, INTEGER, BOOLEAN, TWJSON, LOCATION, IMAGE, HYPERLINK, PASSWORD, TEXT, HTML, GUID, BLOB, LONG, THINGNAME, IMAGE, IMAGELINK, GUID } from './global';\n";
     let runtime = "const DataShapesDefinitions = { ";
     
     for (const key in twConfig.store) {
         if (key.startsWith('@')) continue;
+
         const entity = twConfig.store[key];
+
         if (entity.exported) {
+            entity.firePostTransformActions();
             if (entity.entityKind == TWEntityKind.DataShape) {
                 declarations += `
                     export interface ${entity.exportedName} {
                         ${entity.fields.map(f => APIGenerator.declarationOfProperty(f)).join('\n')}
                     }`,
                     runtime += `${entity.exportedName}: ${JSON.stringify(entity.fields)},\n`
-            } else if (entity.entityKind == TWEntityKind.Thing) {
+            }
+            else if (entity.entityKind == TWEntityKind.Thing) {
                 declarations += `
                     export class ${entity.exportedName} {
                         ${entity.services.map(f => APIGenerator.declarationOfService(f)).join('\n')}
@@ -51,7 +55,8 @@ export function generateAPI() {
                     export interface Things {
                         "${entity.exportedName}": ${entity.exportedName};
                     }`;
-            } else {
+            }
+            else {
                 throw new Error('Only Things and DataShapes can be exposed in API');
             }
         }
