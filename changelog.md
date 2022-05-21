@@ -1,3 +1,7 @@
+# 1.4.5
+
+Updates to thing transformer 1.4.5. For more information, see [Thing Transformer 1.4.5](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/1.4.5)
+
 # 1.4.0
 
 Resolves an issue that broke the `generate-api` command.
