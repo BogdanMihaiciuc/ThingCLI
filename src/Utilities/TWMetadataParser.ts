@@ -601,7 +601,7 @@ export class TWMetadataParser {
             }
 
             // Add each data source as a property
-            declaration += `    ${dataSource}: ${this.sanitizedEntityName(collection, content.Data[dataSource].EntityName)};\n\n`;
+            declaration += `    ${JSON.parse(dataSource)}: ${this.sanitizedEntityName(collection, content.Data[dataSource].EntityName)};\n\n`;
         }
 
         // For each widget, add dependent entities based on the widget types
@@ -612,22 +612,26 @@ export class TWMetadataParser {
             // Get the dependencies based on the widget type
             switch (widget.Properties.Type) {
                 case 'BMCollectionView':
-                    declaration += `    "Cell_${widget.Properties.Id}": ${this.sanitizedEntityName('Mashups', widget.Properties.CellMashupName)};\n\n`;
+                    declaration += widget.Properties.CellMashupName ? `    "Cell_${widget.Properties.Id}": ${this.sanitizedEntityName('Mashups', widget.Properties.CellMashupName)};\n\n` : '';
                     declaration += widget.Properties.HeaderMashupName ? `    "Header_${widget.Properties.Id}": ${this.sanitizedEntityName('Mashups', widget.Properties.HeaderMashupName)};\n\n` : '';
                     declaration += widget.Properties.FooterMashupName ? `    "Footer_${widget.Properties.Id}": ${this.sanitizedEntityName('Mashups', widget.Properties.FooterMashupName)};\n\n` : '';
                     declaration += widget.Properties.EmptyMashupName ? `    "Empty_${widget.Properties.Id}": ${this.sanitizedEntityName('Mashups', widget.Properties.EmptyMashupName)};\n\n` : '';
                     break;
                 case 'BMPopoverController':
                 case 'BMWindowController':
+                    if (!widget.Properties.mashupName) break;
                     declaration += `    "${widget.__TypeDisplayName}_${widget.Properties.DisplayName}": ${this.sanitizedEntityName('Mashups', widget.Properties.mashupName)};\n\n`;
                     break;
                 case 'navigationfunction':
+                    if (!widget.Properties.TargetMashup) break;
                     declaration += `    "Navigation_${widget.Properties.DisplayName}": ${this.sanitizedEntityName('Mashups', widget.Properties.TargetMashup)};\n\n`;
                     break;
                 case 'navigation':
+                    if (!widget.Properties.Mashup) break;
                     declaration += `    "Navigation_${widget.Properties.DisplayName}": ${this.sanitizedEntityName('Mashups', widget.Properties.Mashup)};\n\n`;
                     break;
                 case 'mashupcontainer':
+                    if (!widget.Properties.Mashup) break;
                     declaration += `    "Contained_${widget.Properties.DisplayName}": ${this.sanitizedEntityName('Mashups', widget.Properties.Mashup)};\n\n`;
                     break;
             }
