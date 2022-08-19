@@ -6,6 +6,8 @@ When running the `install` command, the argument documentation is now in a forma
 
 Adds support for a new argument `--uml` that can be specified for the `install` command. When specified, the generated declarations will only use direct type references for thing names and infotables, making it possible to generate UML diagrams with the proper connections. Additionally the arguments object used by services will be converted into a regular argument list. Note that declarations created using this argument cannot be used for development because they no longer use the proper types.
 
+Adds support for the `excludedEntities` property in `twconfig.json`, which is used to prevent certain dependencies of entities from being included when using the `install` command.
+
 # 1.4.6
 
 Updates to thing transformer 1.4.6. For more information, see [Thing Transformer 1.4.6](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/1.4.6)
