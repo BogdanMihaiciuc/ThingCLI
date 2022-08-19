@@ -58,17 +58,42 @@ const installedEntities: Record<string, Record<string, boolean>> = {};
  */
 const installedEntityNames: Set<string> = new Set;
 
+/**
+ * A set of entities that should be excluded.
+ */
+const excludedEntities: Record<string, boolean> = {};
 
+/**
+ * The parser used to convert from metadata into class delcarations.
+ */
+const parser = new TWMetadataParser();
+
+/**
+ * Whether UML mode is enabled or not.
+ */
+let UMLMode = false;
 
 /**
  * Installs the entity dependencies defined in twconfig.json.
- * @returns     A promise that resolves when the operation completes.
+ * @param isUMLMode         Defaults to `false`. When set to `true`, all references will be direct and use sanitized names.
+ *                          The purpose of this mode is to make it possible to auto-generate meaningful UML diagram from imported
+ *                          entities, but entities imported with this flag cannot be used for development.
+ * @returns                 A promise that resolves when the operation completes.
  */
-export async function install() {
+export async function install(isUMLMode: boolean = false) {
     // Load the twconfig file which contains depdencency list.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
     const cwd = process.cwd();
+
+    // Set the UML mode flag
+    parser.UMLMode = isUMLMode;
+    UMLMode = isUMLMode;
+
+    // Get the entities to be excluded
+    twConfig.excludedEntities?.forEach(entity => {
+        excludedEntities[entity] = true;
+    });
 
     // Get total packages to install
     const totalPackages = (twConfig.projectDependencies || []).length + (twConfig.entityDependencies || []).length + (twConfig.extensionDependencies || []).length;
@@ -148,25 +173,6 @@ export async function install() {
 }
 
 /**
- * Returns a name for the entity, based on its Thingworx entity name, that is a valid
- * javascript identifier and unique across the imported entities.
- * @param name 
- */
-function sanitizedEntityName(name: string): string {
-    // Replace non-alphanumeric characters with underscores
-    let sanitizedName = name.replace(NonAlphanumericRegexGlobal, '_');
-
-    // For duplicate names, add underscores at the end of the name
-    while (installedEntityNames.has(sanitizedName)) {
-        sanitizedName += '_';
-    }
-
-    // Add the new name to the set of unique names
-    installedEntityNames.add(sanitizedName);
-    return sanitizedName;
-}
-
-/**
  * Performs a request to get the metadata of the given entity, then parses the response and saves
  * a declaration of the entity's class to `tw_imports`.
  * @param name                  The name of the entity.
@@ -178,6 +184,9 @@ function sanitizedEntityName(name: string): string {
 async function getEntity(name: string, kind: string, slice: number, installProgress: InstallProgress): Promise<void> {
     // Thing packages will be handled by templates
     if (kind == 'ThingPackages') return;
+
+    // Skip if excluided
+    if (excludedEntities[`${kind}/${name}`]) return;
 
     // Skip if already installed
     if (installedEntities[kind] && installedEntities[kind][name]) return;
@@ -202,31 +211,40 @@ async function getEntity(name: string, kind: string, slice: number, installProgr
     // Parse the response based on the kind of entity
     switch (kind) {
         case 'Things':
-            importThing(metadata);
+            importThing(metadata, !UMLMode);
             break;
         case 'ThingTemplates':
-            importThingTemplate(metadata);
+            importThingTemplate(metadata, !UMLMode);
             break;
         case 'ThingShapes':
-            importThingShape(metadata);
+            importThingShape(metadata, !UMLMode);
             break;
         case 'DataShapes':
-            importDataShape(metadata);
+            importDataShape(metadata, !UMLMode);
             break;
         case 'Resources':
-            importResource(metadata);
+            importResource(metadata, !UMLMode);
+            break;
+        case 'Mashups':
+            importMashup(metadata, !UMLMode);
             break;
         case 'Organizations':
-            importEntityDeclaration(name, kind, metadata.description, Object.keys(metadata.organizationalUnits).map(o => JSON.stringify(o)).join(' | '));
+            importEntityDeclaration(name, kind, metadata.description, Object.keys(metadata.organizationalUnits).map(o => JSON.stringify(o)).join(' | '), !UMLMode, metadata);
             break;
         default:
-            importEntityDeclaration(name, kind, metadata.description);
+            importEntityDeclaration(name, kind, metadata.description, undefined, !UMLMode, metadata);
     }
 
     // Import dependencies as well
     try {
         installProgress.entity = `${kind}/${name}/Dependencies`
         const dependencies = await getEntityDependencies(name, kind);
+        if (kind == 'Mashups') {
+            dependencies.rows.push(...getMashupDependencies(metadata).rows);
+        }
+        else if (kind == 'Things') {
+            dependencies.rows.push(...getAdditionalThingDependencies(metadata).rows);
+        }
         const entitySlice = slice / (dependencies.rows.length + 1);
         installProgress.progress += entitySlice;
 
@@ -370,13 +388,14 @@ async function getExtension(name: string, slice: number, installProgress: Instal
 
 /**
  * Parses the given thing metadata and writes a thing class to tw_imports.
- * @param body          An entity metadata json that represents a thing.
+ * @param body              An entity metadata json that represents a thing.
+ * @param withInterface     Defaults to `true`. If set to `false` the collection interface declaration will not be included.
  */
-function importThing(body: any): void {
+function importThing(body: any, withInterface = true): void {
     const name = body.name;
-    const sanitizedName = sanitizedEntityName(body.name);
+    const sanitizedName = parser.sanitizedEntityName('Things', body.name);
 
-    const declaration = TWMetadataParser.declarationOfThing(body, sanitizedName);
+    const declaration = parser.declarationOfThing(body);
 
     // Write out the thing
     if (!fs.existsSync(`./tw_imports/Things/`)) {
@@ -386,24 +405,31 @@ function importThing(body: any): void {
     installedEntities.Things = installedEntities.Things || {};
     installedEntities.Things[name] = true;
 
-    fs.writeFileSync(`./tw_imports/Things/${name}.d.ts`, `${declaration}\n\ndeclare interface Things {
+    fs.writeFileSync(`./tw_imports/Things/${name}.d.ts`, `/**
+ * @module ${body.projectName}
+ */
+/**
+ * ${body.description}
+ */ 
+${declaration}${withInterface ? `\n\ndeclare interface Things {
     /**
      * ${body.description}
      */ 
     ${JSON.stringify(name)}: ${sanitizedName}; 
-}`
+}`: ''}`
     );
 }
 
 /**
  * Parses the given thing template metadata and writes a thing template class to tw_imports.
- * @param body      An entity metadata json that represents a template.
+ * @param body              An entity metadata json that represents a template.
+ * @param withInterface     Defaults to `true`. If set to `false` the collection interface declaration will not be included.
  */
-function importThingTemplate(body: any): void {
+function importThingTemplate(body: any, withInterface = true): void {
     const name = body.name;
-    const sanitizedName = sanitizedEntityName(body.name);
+    const sanitizedName = parser.sanitizedEntityName('ThingTemplates', body.name);
 
-    const declaration = TWMetadataParser.declarationOfThingTemplate(body, sanitizedName);
+    const declaration = parser.declarationOfThingTemplate(body);
     const hasGenericArgument = GenericThingPackages.includes(body.effectiveThingPackage);
 
     // Write out the thing template
@@ -414,25 +440,32 @@ function importThingTemplate(body: any): void {
     installedEntities.ThingTemplates = installedEntities.ThingTemplates || {};
     installedEntities.ThingTemplates[name] = true;
 
-    fs.writeFileSync(`./tw_imports/ThingTemplates/${name}.d.ts`, `${declaration}\n\ndeclare interface ThingTemplates {
+    fs.writeFileSync(`./tw_imports/ThingTemplates/${name}.d.ts`, `/**
+ * @module ${body.projectName}
+ */
+/**
+ * ${body.description}
+ */ 
+${declaration}${withInterface ? `\n\ndeclare interface ThingTemplates {
     /**
      * ${body.description}
      */ 
     ${JSON.stringify(name)}: ThingTemplateEntity<${sanitizedName}${hasGenericArgument ? '<any>' : ''}>; 
-}`
+}` : ''}`
     );
 }
 
 
 /**
  * Parses the given thing shape metadata and writes a thing shape class to tw_imports.
- * @param body      An entity metadata json that represents a shape.
+ * @param body              An entity metadata json that represents a shape.
+ * @param withInterface     Defaults to `true`. If set to `false` the collection interface declaration will not be included.
  */
-function importThingShape(body: any): void {
+function importThingShape(body: any, withInterface = true): void {
     const name = body.name;
-    const sanitizedName = sanitizedEntityName(body.name);
+    const sanitizedName = parser.sanitizedEntityName('ThingShapes', body.name);
 
-    const declaration = TWMetadataParser.declarationOfThingShape(body, sanitizedName);
+    const declaration = parser.declarationOfThingShape(body);
 
     // Write out the thing shape
     if (!fs.existsSync(`./tw_imports/ThingShapes/`)) {
@@ -442,25 +475,32 @@ function importThingShape(body: any): void {
     installedEntities.ThingShapes = installedEntities.ThingShapes || {};
     installedEntities.ThingShapes[name] = true;
 
-    fs.writeFileSync(`./tw_imports/ThingShapes/${name}.d.ts`, `${declaration}\n\ndeclare interface ThingShapes {
+    fs.writeFileSync(`./tw_imports/ThingShapes/${name}.d.ts`, `/**
+ * @module ${body.projectName}
+ */
+/**
+ * ${body.description}
+ */ 
+${declaration}${withInterface ? `\n\ndeclare interface ThingShapes {
     /**
      * ${body.description}
      */ 
     ${JSON.stringify(name)}: ThingShapeEntity<${sanitizedName}>; 
-}`
+}` : ''}`
     );
 }
 
 
 /**
  * Parses the given data shape metadata and writes a data shape class to tw_imports.
- * @param body      An entity metadata json that represents a data shape.
+ * @param body              An entity metadata json that represents a data shape.
+ * @param withInterface     Defaults to `true`. If set to `false` the collection interface declaration will not be included.
  */
-function importDataShape(body: any): void {
+function importDataShape(body: any, withInterface = true): void {
     const name = body.name;
-    const sanitizedName = sanitizedEntityName(body.name);
+    const sanitizedName = parser.sanitizedEntityName('DataShapes', body.name);
 
-    const declaration = TWMetadataParser.declarationOfDataShape(body, sanitizedName);
+    const declaration = parser.declarationOfDataShape(body);
 
     // Write out the data shape
     if (!fs.existsSync(`./tw_imports/DataShapes/`)) {
@@ -470,23 +510,30 @@ function importDataShape(body: any): void {
     installedEntities.DataShapes = installedEntities.DataShapes || {};
     installedEntities.DataShapes[name] = true;
 
-    fs.writeFileSync(`./tw_imports/DataShapes/${name}.d.ts`, `${declaration}\n\ndeclare interface DataShapes {
+    fs.writeFileSync(`./tw_imports/DataShapes/${name}.d.ts`, `/**
+ * @module ${body.projectName}
+ */
+/**
+ * ${body.description}
+ */ 
+${declaration}${withInterface ? `\n\ndeclare interface DataShapes {
     /**
      * ${body.description}
      */ 
     ${JSON.stringify(name)}: DataShapeEntity<${sanitizedName}>; 
-}`
+}` : ''}`
     );
 }
 
 /**
  * Parses the given resource metadata and writes a resource class to tw_imports.
- * @param body      An entity metadata json that represents a resource.
+ * @param body              An entity metadata json that represents a resource.
+ * @param withInterface     Defaults to `true`. If set to `false` the collection interface declaration will not be included.
  */
-function importResource(body: any): void {
+function importResource(body: any, withInterface = true): void {
     const name = body.name;
-    const sanitizedName = sanitizedEntityName(body.name);
-    let declaration = TWMetadataParser.declarationOfResource(body, sanitizedName);
+    const sanitizedName = parser.sanitizedEntityName('Resources', body.name);
+    let declaration = parser.declarationOfResource(body);
 
     // Write out the resource
     if (!fs.existsSync(`./tw_imports/Resources/`)) {
@@ -496,13 +543,101 @@ function importResource(body: any): void {
     installedEntities.Resources = installedEntities.Resources || {};
     installedEntities.Resources[name] = true;
 
-    fs.writeFileSync(`./tw_imports/Resources/${name}.d.ts`, `${declaration}\n\ndeclare interface Resources {
+    fs.writeFileSync(`./tw_imports/Resources/${name}.d.ts`, `/**
+ * @module ${body.projectName}
+ */
+/**
+ * ${body.description}
+ */ 
+${declaration}${withInterface ? `\n\ndeclare interface Resources {
     /**
      * ${body.description}
      */ 
     ${JSON.stringify(name)}: ${sanitizedName}; 
-}`
+}` : ''}`
     );
+}
+
+/**
+ * Returns a list of additionally referenced entities from the specified thing's property values.
+ * @param body      An entity metadata json that represents a thing.
+ * @returns         An infotable containing the dependencies.
+ */
+function getAdditionalThingDependencies(body: any): JSONInfoTable<EntityDependency> {
+    return {
+        dataShape: {
+            fieldDefinitions: {}
+        },
+        rows: parser.additionalDependenciesOfThing(body)
+    }
+}
+
+/**
+ * Returns a list of referenced entities from the specified mashup.
+ * @param body      An entity metadata json that represents a mashup.
+ * @returns         An infotable containing the dependencies.
+ */
+function getMashupDependencies(body: any): JSONInfoTable<EntityDependency> {
+    return {
+        dataShape: {
+            fieldDefinitions: {}
+        },
+        rows: parser.dependenciesOfMashup(body)
+    }
+}
+
+/**
+ * Parses the given mashup metadata and writes a mashup class to tw_imports.
+ * @param body              An entity metadata json that represents a mashup.
+ * @param withInterface     Defaults to `true`. If set to `false` the collection interface declaration will not be included.
+ */
+function importMashup(body: any, withInterface = true): void {
+    const name = body.name;
+    const sanitizedName = parser.sanitizedEntityName('Mashups', body.name);
+    let declaration = parser.declarationOfMashup(body);
+
+    // Write out the resource
+    if (!fs.existsSync(`./tw_imports/Mashups/`)) {
+        fs.mkdirSync(`./tw_imports/Mashups/`);
+    }
+
+    installedEntities.Mashups = installedEntities.Mashups || {};
+    installedEntities.Mashups[name] = true;
+
+    if (UMLMode) {
+        // In UML mode write the mashup class
+        fs.writeFileSync(`./tw_imports/Mashups/${name}.d.ts`, `/**
+ * @module ${body.projectName}
+ */
+/**
+ * ${body.description}
+ */ 
+${declaration}${withInterface ? `\n\ndeclare interface Mashups {
+    /**
+     * ${body.description}
+     */ 
+    ${JSON.stringify(name)}: ${sanitizedName}; 
+}` : ''}`
+        );
+    }
+    else {
+        // In non-UML mode, write just the interface declaration
+        fs.writeFileSync(`./tw_imports/Mashups/${name}.d.ts`, withInterface ? `/**
+ * @module ${body.projectName}
+ */
+/**
+ * ${body.description}
+ */
+declare class ${sanitizedName} extends MashupEntity {}
+
+declare interface Mashups { 
+    /**
+     * ${body.description}
+     */
+    ${JSON.stringify(name)}: MashupEntity; 
+}` : ''
+        );
+    }
 }
 
 /**
@@ -511,8 +646,10 @@ function importResource(body: any): void {
  * @param kind              The kind of entity.
  * @param description       A description to use as the JSDoc documentation.
  * @param genericArgument   If specified, a generic argument to apply to the entity type.
+ * @param withInterface     Defaults to `true`. If set to `false` the collection interface declaration will not be included.
+ * @param body              The entity metadata.
  */
-function importEntityDeclaration(name: string, kind: string, description: string, genericArgument?: string): void {
+function importEntityDeclaration(name: string, kind: string, description: string, genericArgument?: string, withInterface = true, body?: any): void {
     if (!fs.existsSync(`./tw_imports/${kind}/`)) {
         fs.mkdirSync(`./tw_imports/${kind}/`);
     }
@@ -520,11 +657,14 @@ function importEntityDeclaration(name: string, kind: string, description: string
     installedEntities[kind] = installedEntities[kind] || {};
     installedEntities[kind][name] = true;
 
-    fs.writeFileSync(`./tw_imports/${kind}/${name}.d.ts`, `declare interface ${kind} { 
+    fs.writeFileSync(`./tw_imports/${kind}/${name}.d.ts`, withInterface ? `/**
+ * @module ${body?.projectName}
+ */
+declare interface ${kind} { 
     /**
      * ${description}
      */
     ${JSON.stringify(name)}: ${kind.substring(0, kind.length - 1)}Entity${genericArgument ? `<${genericArgument}>` : ''}; 
-}`
+}` : ''
     );
 }
