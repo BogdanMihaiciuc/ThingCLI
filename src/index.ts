@@ -78,7 +78,11 @@ async function main() {
             await addProject();
             break;
         case Commands.install:
-            await install();
+            let UMLMode = false;
+            if (args.includes('--uml')) {
+                UMLMode = true;
+            }
+            await install(UMLMode);
             break;
         case Commands.init:
             await init();
