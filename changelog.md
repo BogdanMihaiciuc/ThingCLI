@@ -1,3 +1,7 @@
+# 1.4.8
+
+Resolves an issue when using `install` with the `--uml` argument that caused a JSON error to be thrown.
+
 # 1.4.7
 
 When running the `install` command, the generated files will now also have tsdoc comments on the entity classes themselves, in addition to just the collection declarations.

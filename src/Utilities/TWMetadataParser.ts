@@ -601,7 +601,7 @@ export class TWMetadataParser {
             }
 
             // Add each data source as a property
-            declaration += `    ${JSON.parse(dataSource)}: ${this.sanitizedEntityName(collection, content.Data[dataSource].EntityName)};\n\n`;
+            declaration += `    ${JSON.stringify(dataSource)}: ${this.sanitizedEntityName(collection, content.Data[dataSource].EntityName)};\n\n`;
         }
 
         // For each widget, add dependent entities based on the widget types
