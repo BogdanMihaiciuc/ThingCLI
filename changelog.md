@@ -1,3 +1,7 @@
+# 1.4.10
+
+Updates to thing transformer 1.4.8. For more information, see [Thing Transformer 1.4.8](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/1.4.8)
+
 # 1.4.9
 
 Updates to thing transformer 1.4.7. For more information, see [Thing Transformer 1.4.7](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/1.4.7)
