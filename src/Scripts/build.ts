@@ -1,6 +1,7 @@
 import { TWThingTransformerFactory, TWConfig, TWThingTransformer, DiagnosticMessageKind, DiagnosticMessage } from 'bm-thing-transformer';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
+import * as Path from 'path';
 import { Builder, parseStringPromise } from 'xml2js';
 import { TSUtilities } from '../Utilities/TSUtilities';
 import ts from 'typescript';
@@ -73,7 +74,7 @@ export async function build(): Promise<string[]> {
      * @param path              The project's path.
      * @param outPath           The project's target path.
      */
-     async function buildProject(projectName: string, path: string, outPath: string): Promise<void> {
+    async function buildProject(projectName: string, path: string, outPath: string): Promise<void> {
         // Ensure the outpath exists
         if (!fs.existsSync(outPath)) {
             fs.mkdirSync(outPath);
@@ -88,11 +89,14 @@ export async function build(): Promise<string[]> {
         if (fs.existsSync(`${path}/tsconfig.json`)) {
             tsConfig = require(`${path}/tsconfig.json`);
         }
+
+        // Measure the time it takes to build
+        const timeStart = process.hrtime();
     
         // Create the typescript project and emit using both transformers
         const program = TSUtilities.programWithPath(path, true);
 
-        // Display a progress bar that tracks the compilation progress.
+        // Display a progress bar that tracks the compilation progress on the next line
         process.stdout.write('\n');
 
         // The total count of files to be processed will be the number of files that don't
@@ -248,7 +252,10 @@ export async function build(): Promise<string[]> {
 
         fs.writeFileSync(`${outPath}/metadata.xml`, outXML);
 
-        process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Built ${projectName || 'project'}${formattedDiagnostics.length ? ' (with warnings):' : '     '}\n`);
+        const timeEnd = process.hrtime();
+        const duration = (timeEnd[0] + timeEnd[1] / 1_000_000_000 - timeStart[0] - timeStart[1] / 1_000_000_000)
+
+        process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Built ${projectName || 'project'} in \x1b[1;32m${duration.toFixed(1)}s\x1b[0m${formattedDiagnostics.length ? ` (with warnings):` : '     '}\n`);
 
         // Write out the diagnostic messages at the end of the task
         if (formattedDiagnostics) {
@@ -258,6 +265,40 @@ export async function build(): Promise<string[]> {
         // If any validation errors were reported, display them at the end of the task
         for (const message of diagnosticMessages) {
             console.log(`🔶 \x1b[1;33mWarning\x1b[0m ${message.message}`);
+        }
+
+        // If entity copying is enabled, look for XML files in the project path and copy them to the build directory
+        if (twConfig.copyEntities) {
+            process.stdout.write(`\x1b[2m❯\x1b[0m Copying ${projectName || 'project'} entities`);
+
+            /**
+             * Finds and copies any XML files in the specified directory to the project's
+             * build directory. Recursively looks into any subdirectories.
+             * @param path      The path in which to start looking for XML files.
+             */
+            function copyXMLFilesInDirectory(path: string): void {
+                // Get all files in the directory
+                const files = fs.readdirSync(path);
+
+                for (const file of files) {
+                    const filePath = Path.join(path, file);
+                    // Recursively look into subdirectories
+                    if (fs.statSync(filePath).isDirectory()) {
+                        copyXMLFilesInDirectory(filePath);
+                        continue;
+                    }
+
+                    // If the file is an xml, copy it to the build directory
+                    if (file.toLowerCase().endsWith('.xml')) {
+                        fs.cpSync(filePath, `${outPath}/Entities/${file}`);
+                    }
+                }
+            }
+
+            // Copy any XML files to the build directory
+            copyXMLFilesInDirectory(Path.join(path, 'src'));
+
+            process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Copied ${projectName || 'project'} entities  \n`);
         }
     }
 
