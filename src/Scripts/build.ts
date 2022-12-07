@@ -37,6 +37,10 @@ export async function build(): Promise<string[]> {
     const isDebugBuild = args.includes('--debug');
     twConfig.debug = isDebugBuild;
 
+    // If the trace flag is specified, apply it to the config
+    const isTraceBuild = args.includes('--trace');
+    twConfig.trace = isTraceBuild;
+
     // Clear the build output folder to remove any entities which may have been removed from the project
     if (fs.existsSync(`${cwd}/build`)) {
         fs.rmSync(`${cwd}/build`, {force: true, recursive: true});
