@@ -90,8 +90,13 @@ export async function install(isUMLMode: boolean = false) {
     parser.UMLMode = isUMLMode;
     UMLMode = isUMLMode;
 
+    // Print out a warning when UML mode is used
+    if (UMLMode) {
+        console.log(`🔶 \x1b[1;33mUsing deprecated argument --uml.\x1b[0m\nThis functionality will be removed in a future version.\n`);
+    }
+
     // Get the entities to be excluded
-    twConfig.excludedEntities?.forEach(entity => {
+    (twConfig as any).excludedEntities?.forEach(entity => {
         excludedEntities[entity] = true;
     });
 
