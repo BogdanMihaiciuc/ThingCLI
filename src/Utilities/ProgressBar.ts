@@ -137,4 +137,15 @@ export class ProgressBar {
         process.off('SIGINT', this._sigintHandler);
     }
 
+    /**
+     * Clears the progress bar and moves the cursor back to where the progress
+     * bar started.
+     */
+    destroy() {
+        this._clear();
+        process.stdout.write('\n\u001B[?25h');
+
+        process.off('SIGINT', this._sigintHandler);
+    }
+
 }
