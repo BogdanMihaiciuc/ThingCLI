@@ -1,3 +1,15 @@
+# 1.5
+
+The `--uml` argument is now deprecated for the `install` command and will print out a warning when used.
+
+Added support for the `--trace` argument for the `build` command and related commands to create a profiling build.
+
+While building files, a progress bar is now displayed to track the progress. Additionally, the elapsed time will now be displayed at the end of the transform process.
+
+Adds support for a new option `copyEntities` that can be defined in `twconfig.json` that, when enabled, adds an additional step of copying any XML files in the `src` folder(s) to the build output folder.
+
+Resolves an issue with the `init` command where the version of the node type declarations was incompatible with the Thingworx type definitions. An older version is now used for new projects.
+
 # 1.4.10
 
 Updates to thing transformer 1.4.8. For more information, see [Thing Transformer 1.4.8](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/1.4.8)
