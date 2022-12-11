@@ -34,7 +34,7 @@ Builds the thingworx declarations for the project, making it possible to referen
 
 Usage:
 ```bash
-npx twc build [--merged|--separate] [--debug]
+npx twc build [--merged|--separate] [--debug] [--trace]
 ```
 
 Builds a thingworx extension package from the typescript project which can be installed on a thingworx server.
@@ -42,11 +42,12 @@ Arguments:
  - `--merged`: Can be used with a multi-project repository. Causes the projects to be bundled in a single extension.
  - `--separate`: Can be used with a multi-project repository and is the default if `--merged` isn't specified. Causes the projects to each have their own separate extension.
  - `--debug`: Creates a debug build.
+ - `--trace`: Creates a trace build.
 
 ## `upload`
 Usage:
 ```bash
-npx twc upload [--merged|--separate] [--debug] [--remove] [--retain-version]
+npx twc upload [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json.
@@ -57,7 +58,7 @@ Arguments:
 ## `deploy`
 Usage:
 ```bash
-npx twc deploy [--merged|--separate] [--debug] [--remove] [--retain-version]
+npx twc deploy [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json. After the installation is complete, it runs the services marked with the `@deploy` decorator.

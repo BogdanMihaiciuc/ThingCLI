@@ -43,7 +43,7 @@ interface TSProjectWithDependencies extends TSProjectWithNamedDependencies {
 
 /**
  * A class that contains various utility methods making it easier
- * to interact with the typescript compuler API.
+ * to interact with the typescript compiler API.
  */
 export class TSUtilities {
 
