@@ -6,7 +6,7 @@ Added support for the `--trace` argument for the `build` command and related com
 
 While building files, a progress bar is now displayed to track the progress. Additionally, the elapsed time will now be displayed at the end of the transform process.
 
-Adds support for a new option `copyEntities` that can be defined in `twconfig.json` that, when enabled, adds an additional step of copying any XML files in the `src` folder(s) to the build output folder.
+Adds support for a new option `copyEntities` that can be defined in `twconfig.json` that, when enabled, adds an additional step of copying any XML files in the `src` folder(s) to the build output folder. Note that files will be copied with no additional modifications. They won't be assigned to the configured project and any other metadata, such as the change history will be retained.
 
 Resolves an issue with the `init` command where the version of the node type declarations was incompatible with the Thingworx type definitions. An older version is now used for new projects.
 
