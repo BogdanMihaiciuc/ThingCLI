@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as FS from 'fs';
 
 /**
  * Increments the minor version declared in package.json by 1.
@@ -19,7 +19,7 @@ export function incrementVersion(): void {
     
     packageJSON.version = version.join('-');
 
-    fs.writeFileSync(`${cwd}/package.json`, JSON.stringify(packageJSON, undefined, '\t'));
+    FS.writeFileSync(`${cwd}/package.json`, JSON.stringify(packageJSON, undefined, '\t'));
 
     console.log(`\x1b[1;32m✔\x1b[0m Incremented version to ${packageJSON.version}`);
 }
