@@ -51,6 +51,16 @@ async function invokeEndpoint(endpoint: string): Promise<void> {
         }
         else {
             process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Deployment script \x1b[1m${endpoint}\x1b[0m ran successfully\n`);
+            try {
+                const result = JSON.parse(response.body);
+
+                if (result.rows && result.rows.length == 1 && result.rows[0].result) {
+                    console.log(`  \x1b[2m❯\x1b[0m ${result.rows[0].result}`);
+                }
+            }
+            catch (err) {
+                // If the response can't be parsed, ignore it
+            }
         }
     }
     catch (err) {
