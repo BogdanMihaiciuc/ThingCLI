@@ -60,7 +60,7 @@ interface AppKeyAuthenticationParameters {
 
 /**
  * An interface that describes the parameters that users must provide in order to
- * connecto to thingworx using a username and password combo.
+ * connect to thingworx using a username and password combo.
  */
 interface UsernameAuthenticationParameters {
 
@@ -437,7 +437,7 @@ function envDefault(args: CreationParameters): string {
 }
 
 /**
- * Returns the contents of a deafult .gitignore file.
+ * Returns the contents of a default .gitignore file.
  * @returns     A string with the contents of a .gitignore file.
  */
 function gitignoreDefault(): string {
