@@ -1,3 +1,11 @@
+# 1.5.1
+
+The `upload` command can now take an additional argument `--extensions` that, when specified, causes the command to also upload any extensions in the `extensions` directory in the root of the project to the thingworx server before uploading the project extension.
+
+When specifying the `@deploy` decorator on thing templates or thing shapes, the deploy command will now invoke the relevant services on things that derive from them.
+
+When `@deploy` services return a single value, these values will now be printed out.
+
 # 1.5
 
 The `--uml` argument is now deprecated for the `install` command and will print out a warning when used.

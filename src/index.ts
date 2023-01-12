@@ -108,14 +108,33 @@ else {
 bm-thing-cli <command> [--argument] ...
 
 Available commands:
- * \x1b[1mdeclarations\x1b[0m                                                            Builds the collection declarations
- * \x1b[1mwatch\x1b[0m                                                                   Watches the source folder and runs declarations on any change
- * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug]                                 Builds the thingworx extension
- * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retain-version]  Builds and uploads the thingworx extension
- * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--remove] [--retain-version]  Uploads the extension then runs deployment scripts
- * \x1b[1mremove\x1b[0m [--merged] [--separate]                                          Removes the thingworx extension
- * \x1b[1madd-project\x1b[0m                                                             Adds a new project to the repository
- * \x1b[1mgenerate-api\x1b[0m                                                            EXPERIMENTAL: Builds declarations out of exported entities that can be used in other projects
- * \x1b[1minit\x1b[0m                                                                    Initializes a thingworx project in an empty folder
- * \x1b[1mupgrade\x1b[0m                                                                 Upgrades from a gulp project to a twc project`);
+ * \x1b[1mdeclarations\x1b[0m
+   Builds the collection declarations
+
+ * \x1b[1mwatch\x1b[0m
+   Watches the source folder and runs declarations on any change
+
+ * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug] [--trace]
+   Builds the thingworx extension
+
+ * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version]
+   Builds and uploads the thingworx extension
+
+ * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version]
+   Uploads the extension then runs deployment scripts
+
+ * \x1b[1mremove\x1b[0m [--merged] [--separate]
+   Removes the thingworx extension
+
+ * \x1b[1madd-project\x1b[0m
+   Adds a new project to the repository
+
+ * \x1b[1mgenerate-api\x1b[0m
+   EXPERIMENTAL: Builds declarations out of exported entities that can be used in other projects
+
+ * \x1b[1minit\x1b[0m
+   Initializes a thingworx project in an empty folder
+   
+ * \x1b[1mupgrade\x1b[0m
+   Upgrades from a gulp project to a twc project`);
 }

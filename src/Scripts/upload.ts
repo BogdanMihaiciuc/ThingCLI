@@ -1,7 +1,9 @@
-import * as fs from 'fs';
+import * as FS from 'fs';
+import * as Path from 'path';
 import { TWConfig } from 'bm-thing-transformer';
 import { TSUtilities } from '../Utilities/TSUtilities';
 import { TWClient } from '../Utilities/TWClient';
+import AdmZip from 'adm-zip';
 
 const [, , , ...args] = process.argv;
 
@@ -21,6 +23,34 @@ export async function upload(): Promise<void> {
 
     // Load the twconfig file which contains the version and package name information.
     const packageJSON = require(`${process.cwd()}/package.json`);
+
+    // If extensions are specified, create a zip with them and upload them
+    if (args.includes('--extensions')) {
+        // Create a zip file with all of the extensions so thingworx can determine
+        // the correct order in which they should install
+        const admArchive = new AdmZip();
+        admArchive.addLocalFolder(Path.join(cwd, 'extensions'));
+
+        await new Promise<void>((resolve, reject) => {
+            admArchive.writeZip(Path.join(cwd, 'zip', 'extensions.zip'), (error) => {
+                if (error) return reject(error);
+
+                resolve();
+            });
+        });
+
+        // Deploy the extensions
+        try {
+            await uploadZip(Path.join(cwd, 'zip', 'extensions.zip'), 'Extensions');
+        }
+        catch (e) {
+            // The extensions failing is non-critical, so a project upload is attempted
+            // even if an error occurs at this step
+        }
+
+        // Delete the combined extensions zip after installation
+        FS.rmSync(Path.join(cwd, 'zip', 'extensions.zip'));
+    }
 
     if (isSeparate && twConfig.projectName == '@auto') {
         // In separate mode, it is necessary to upload the projects in dependency order
@@ -47,7 +77,7 @@ async function uploadZip(path: string, name?: string): Promise<void> {
     process.stdout.write(`\x1b[2m❯\x1b[0m Uploading${name ? ` ${name}` : ''} to ${TWClient.server}`);
 
     const formData = {
-        file: fs.createReadStream(path)
+        file: FS.createReadStream(path)
     };
 
     const response = await TWClient.importExtension(formData);

@@ -1,5 +1,5 @@
 import { TWThingTransformerFactory, TWConfig, TWEntityKind } from 'bm-thing-transformer';
-import * as fs from 'fs';
+import * as FS from 'fs';
 import * as ts from 'typescript';
 import { TSUtilities } from '../Utilities/TSUtilities';
 import { APIGenerator } from '../Utilities/APIDeclarationGenerator';
@@ -100,8 +100,8 @@ export function generateAPI() {
 
     // Write the declarations to a .d.ts file
     TSUtilities.ensurePath(`${cwd}/api`, cwd);
-    fs.writeFileSync(`${cwd}/api/Generated.d.ts`, declarations);
-    fs.writeFileSync(`${cwd}/api/Runtime.ts`, runtime);
+    FS.writeFileSync(`${cwd}/api/Generated.d.ts`, declarations);
+    FS.writeFileSync(`${cwd}/api/Runtime.ts`, runtime);
 
     process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Built exported API   \n`);
 }

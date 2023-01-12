@@ -1,5 +1,5 @@
 import { TWThingTransformerFactory, TWConfig } from 'bm-thing-transformer';
-import * as fs from 'fs';
+import * as FS from 'fs';
 import * as ts from 'typescript';
 import { TSUtilities } from '../Utilities/TSUtilities';
 
@@ -59,14 +59,14 @@ export function declarations() {
 
         // Write the declarations to a .d.ts file
         TSUtilities.ensurePath(`${path}/static/gen`, path);
-        fs.writeFileSync(`${path}/static/gen/Generated.d.ts`, declarations);
+        FS.writeFileSync(`${path}/static/gen/Generated.d.ts`, declarations);
     }
     
     const cwd = process.cwd();
     
     if (twConfig.projectName == '@auto') {
         TSUtilities.ensurePath(`${cwd}/src/static/gen`, cwd);
-        fs.writeFileSync(`${cwd}/src/static/gen/Generated.d.ts`, getMethodHelperDeclarations());
+        FS.writeFileSync(`${cwd}/src/static/gen/Generated.d.ts`, getMethodHelperDeclarations());
         // If running in multi-project mode, run against each project separately
         TSUtilities.projects().forEach(p => {
             emitDeclarationsOfProject(p.path);
