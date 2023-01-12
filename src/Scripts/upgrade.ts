@@ -1,5 +1,5 @@
 import Enquirer from 'enquirer';
-import * as fs from 'fs';
+import * as FS from 'fs';
 import { spawn } from 'child_process';
 import { twConfigDefault, twConfigMethodHelperDefaults } from './init';
 
@@ -43,7 +43,7 @@ export async function upgrade() {
     }
 
     // Older projects did not use a twconfig file, create one for them if they don't have it
-    const hasTwConfig = fs.existsSync(`${cwd}/twconfig.json`);
+    const hasTwConfig = FS.existsSync(`${cwd}/twconfig.json`);
 
     let projectName: {projectName: string} | undefined;
     if (!hasTwConfig) {
@@ -72,12 +72,12 @@ export async function upgrade() {
 
     // Handle any updates to the twconfig, like extra functionalities
     if (hasTwConfig) {
-        const currentTwConfig = JSON.parse(fs.readFileSync(`${cwd}/twconfig.json`, 'utf-8'));
+        const currentTwConfig = JSON.parse(FS.readFileSync(`${cwd}/twconfig.json`, 'utf-8'));
         // Add the method helpers options
         if(!currentTwConfig.methodHelpers) {
             currentTwConfig.methodHelpers = twConfigMethodHelperDefaults();
         }
-        fs.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(currentTwConfig, undefined, 4));
+        FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(currentTwConfig, undefined, 4));
     }
 
     // Add the new thingworx types directories to tsconfig
@@ -93,17 +93,17 @@ export async function upgrade() {
         "./node_modules/bm-thing-transformer/static/**/*.d.ts",
         "./node_modules/bm-thing-cli/node_modules/bm-thing-transformer/static/**/*.d.ts"
     );
-    fs.writeFileSync(`${cwd}/tsconfig.json`, JSON.stringify(tsConfig, undefined, 4));
+    FS.writeFileSync(`${cwd}/tsconfig.json`, JSON.stringify(tsConfig, undefined, 4));
 
     // Remove the gulpfile, since building is now handled by bm-thing-cli
-    fs.rmSync(`${cwd}/gulpfile.js`);
+    FS.rmSync(`${cwd}/gulpfile.js`);
 
     // Remove the static base directory, since dependencies are now included in bm-thing-transformer
-    fs.rmSync(`${cwd}/static/base`, {force: true, recursive: true});
+    FS.rmSync(`${cwd}/static/base`, {force: true, recursive: true});
 
     // If a twconfig file was not used, create it
     if (projectName) {
-        fs.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfigDefault(projectName.projectName), undefined, 4));
+        FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfigDefault(projectName.projectName), undefined, 4));
     }
 
     // Update the build commands in package json, unless they have been modified
@@ -132,7 +132,7 @@ export async function upgrade() {
     scripts['watch:declarations'] = 'twc watch';
 
     // Write the updated package json
-    fs.writeFileSync(`${cwd}/package.json`, JSON.stringify(packageJSON, undefined, 4));
+    FS.writeFileSync(`${cwd}/package.json`, JSON.stringify(packageJSON, undefined, 4));
 
     // Uninstall all the dependencies that were used by the build script
     await new Promise((resolve, reject) => {
@@ -174,7 +174,7 @@ function formattedDependenciesToRemove(): string {
     // - metadata.xml:      thingworx metadata template
     // - src:               the sources folder
 
-    if (fs.existsSync(`${path}/package.json`)) {
+    if (FS.existsSync(`${path}/package.json`)) {
         // For this to be a gulp based thingworx project, it needs to have gulp as a dev dependency.
         const packageJSON = require(`${path}/package.json`);
         const devDependencies = packageJSON.devDependencies;
@@ -192,17 +192,17 @@ function formattedDependenciesToRemove(): string {
 
     // Most of the options in tsconfig are optional for this project, the default ones are just recommendations
     // so its only required that such a file exists
-    if (!fs.existsSync(`${path}/tsconfig.json`)) {
+    if (!FS.existsSync(`${path}/tsconfig.json`)) {
         return false;
     }
 
     // A template metadata file must exist
-    if (!fs.existsSync(`${path}/metadata.xml`)) {
+    if (!FS.existsSync(`${path}/metadata.xml`)) {
         return false;
     }
 
     // A gulpfile build script must exist
-    if (!fs.existsSync(`${path}/gulpfile.js`)) {
+    if (!FS.existsSync(`${path}/gulpfile.js`)) {
         return false;
     }
 

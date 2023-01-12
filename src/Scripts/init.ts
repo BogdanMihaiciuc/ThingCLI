@@ -1,5 +1,5 @@
 import Enquirer from "enquirer";
-import * as fs from 'fs';
+import * as FS from 'fs';
 import { TWConfig, MethodHelpers } from 'bm-thing-transformer';
 import { URL } from "url";
 import { spawn } from 'child_process';
@@ -60,7 +60,7 @@ interface AppKeyAuthenticationParameters {
 
 /**
  * An interface that describes the parameters that users must provide in order to
- * connecto to thingworx using a username and password combo.
+ * connect to thingworx using a username and password combo.
  */
 interface UsernameAuthenticationParameters {
 
@@ -198,22 +198,22 @@ export async function init() {
     const creationParameters: CreationParameters = Object.assign({}, baseDetails, authenticationDetails);
 
     // Create the necessary files
-    fs.writeFileSync(`${cwd}/package.json`, JSON.stringify(packageDefault(creationParameters), undefined, 4));
-    fs.writeFileSync(`${cwd}/tsconfig.json`, JSON.stringify(tsConfigDefault(), undefined, 4));
-    fs.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfigDefault(creationParameters.projectName), undefined, 4));
-    fs.writeFileSync(`${cwd}/metadata.xml`, metadataXMLDefault());
-    fs.writeFileSync(`${cwd}/.gitignore`, gitignoreDefault());
+    FS.writeFileSync(`${cwd}/package.json`, JSON.stringify(packageDefault(creationParameters), undefined, 4));
+    FS.writeFileSync(`${cwd}/tsconfig.json`, JSON.stringify(tsConfigDefault(), undefined, 4));
+    FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfigDefault(creationParameters.projectName), undefined, 4));
+    FS.writeFileSync(`${cwd}/metadata.xml`, metadataXMLDefault());
+    FS.writeFileSync(`${cwd}/.gitignore`, gitignoreDefault());
 
-    fs.mkdirSync(`${cwd}/src`);
+    FS.mkdirSync(`${cwd}/src`);
 
     // Create an env file with the authentication details
     if (creationParameters.thingworxServer) {
-        fs.writeFileSync(`${cwd}/.env`, envDefault(creationParameters));
+        FS.writeFileSync(`${cwd}/.env`, envDefault(creationParameters));
 
         // If an app key authentication was selected, create an attach launch configuration
         if ('thingworxAppKey' in creationParameters) {
-            fs.mkdirSync(`${cwd}/.vscode`);
-            fs.writeFileSync(`${cwd}/.vscode/launch.json`, JSON.stringify(launchConfigurationDefault(creationParameters), undefined, 4));
+            FS.mkdirSync(`${cwd}/.vscode`);
+            FS.writeFileSync(`${cwd}/.vscode/launch.json`, JSON.stringify(launchConfigurationDefault(creationParameters), undefined, 4));
         }
     }
 
@@ -238,7 +238,7 @@ function projectExists(path: string): boolean {
     // - metadata.xml:      thingworx metadata template
     // - src:               the sources folder
 
-    if (fs.existsSync(`${path}/package.json`)) {
+    if (FS.existsSync(`${path}/package.json`)) {
         // For this to be a thingworx project, it needs to have bm-thing-cli as a dev dependency.
         const packageJSON = require(`${path}/package.json`);
         const devDependencies = packageJSON.devDependencies;
@@ -256,12 +256,12 @@ function projectExists(path: string): boolean {
 
     // Most of the options in tsconfig are optional for this project, the default ones are just recommendations
     // so its only required that such a file exists
-    if (!fs.existsSync(`${path}/tsconfig.json`)) {
+    if (!FS.existsSync(`${path}/tsconfig.json`)) {
         return false;
     }
 
     // A twconfig.json file must exist and contain at least the "projectName" key
-    if (!fs.existsSync(`${path}/twconfig.json`)) {
+    if (!FS.existsSync(`${path}/twconfig.json`)) {
         return false;
     }
     else {
@@ -272,7 +272,7 @@ function projectExists(path: string): boolean {
     }
 
     // A template metadata file must exist
-    if (!fs.existsSync(`${path}/metadata.xml`)) {
+    if (!FS.existsSync(`${path}/metadata.xml`)) {
         return false;
     }
 
@@ -437,7 +437,7 @@ function envDefault(args: CreationParameters): string {
 }
 
 /**
- * Returns the contents of a deafult .gitignore file.
+ * Returns the contents of a default .gitignore file.
  * @returns     A string with the contents of a .gitignore file.
  */
 function gitignoreDefault(): string {

@@ -1,5 +1,5 @@
 import Enquirer from "enquirer";
-import * as fs from 'fs';
+import * as FS from 'fs';
 import { TWConfig } from 'bm-thing-transformer';
 import { TSUtilities } from "../Utilities/TSUtilities";
 
@@ -45,21 +45,21 @@ export async function addProject(): Promise<void> {
 
         // Copy the contents of the src folder into a subfolder with the current project name
         // First copy to a temporary folder, then clear out the contents of src
-        fs.cpSync(`${cwd}/src`, `${cwd}/tmp`, {recursive: true});
-        fs.rmSync(`${cwd}/src`, {recursive: true, force: true});
+        FS.cpSync(`${cwd}/src`, `${cwd}/tmp`, {recursive: true});
+        FS.rmSync(`${cwd}/src`, {recursive: true, force: true});
 
         // Then copy into the appropriate subfolder in src and clear the temporary folder
         TSUtilities.ensurePath(`${cwd}/src/${projectName}/src`, cwd);
-        fs.cpSync(`${cwd}/tmp`, `${cwd}/src/${projectName}/src`, {recursive: true});
-        fs.rmSync(`${cwd}/tmp`, {recursive: true, force: true});
+        FS.cpSync(`${cwd}/tmp`, `${cwd}/src/${projectName}/src`, {recursive: true});
+        FS.rmSync(`${cwd}/tmp`, {recursive: true, force: true});
 
         // Create and save a default tsconfig.json file
         const tsConfig = JSON.stringify(tsConfigDefault(), undefined, 4);
-        fs.writeFileSync(`${cwd}/src/${projectName}/tsconfig.json`, tsConfig);
+        FS.writeFileSync(`${cwd}/src/${projectName}/tsconfig.json`, tsConfig);
 
         // Set the twconfig project name to '@auto' then save it
         twConfig.projectName = '@auto';
-        fs.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfig, undefined, 4));
+        FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfig, undefined, 4));
 
         process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Converted to multi-project   \n`);
     }
@@ -78,14 +78,14 @@ export async function addProject(): Promise<void> {
     process.stdout.write(`\x1b[2m❯\x1b[0m Creating project "${name}"`);
 
     // Create a folder in the src directory for this project
-    fs.mkdirSync(`${cwd}/src/${name}`);
+    FS.mkdirSync(`${cwd}/src/${name}`);
 
     // Add the default tsconfig file
     const tsConfig = JSON.stringify(tsConfigDefault(), undefined, 4);
-    fs.writeFileSync(`${cwd}/src/${name}/tsconfig.json`, tsConfig);
+    FS.writeFileSync(`${cwd}/src/${name}/tsconfig.json`, tsConfig);
 
     // Create a src directory for the project
-    fs.mkdirSync(`${cwd}/src/${name}/src`);
+    FS.mkdirSync(`${cwd}/src/${name}/src`);
 
     process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Created project "${name}"  \n`);
 }

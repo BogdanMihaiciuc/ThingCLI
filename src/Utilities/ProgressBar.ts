@@ -1,7 +1,7 @@
 import * as readline from 'readline';
 
 /**
- * An array containing progress characters corresponding to partially filled progres
+ * An array containing progress characters corresponding to partially filled progress
  * bar sections. 
  */
 const FractionalSymbols = [' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'];
@@ -63,7 +63,7 @@ export class ProgressBar {
     };
 
     /**
-     * Draws the progress bar. Untill invoking `stop`, you should not write to stdout.
+     * Draws the progress bar. Until invoking `stop`, you should not write to stdout.
      */
     start() {
         this._render();

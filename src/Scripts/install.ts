@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as FS from 'fs';
 import { TWConfig } from 'bm-thing-transformer';
 import { TWClient } from '../Utilities/TWClient';
 import { GenericThingPackages, NonAlphanumericRegexGlobal, TWMetadataParser } from '../Utilities/TWMetadataParser';
@@ -15,7 +15,7 @@ interface InstallProgress {
     progress: number;
 
     /**
-     * A string displayed at the end of the progess bar that indicates which entity
+     * A string displayed at the end of the progress bar that indicates which entity
      * is currently being processed.
      */
     entity: string;
@@ -54,7 +54,7 @@ const installedEntities: Record<string, Record<string, boolean>> = {};
 /**
  * A map that keeps track of used entity names to make it possible to install entities that have the
  * same name but different entity kinds.
- * Its keys are the sanitized names and its values are the correponding thingworx names.
+ * Its keys are the sanitized names and its values are the corresponding thingworx names.
  */
 const installedEntityNames: Set<string> = new Set;
 
@@ -64,7 +64,7 @@ const installedEntityNames: Set<string> = new Set;
 const excludedEntities: Record<string, boolean> = {};
 
 /**
- * The parser used to convert from metadata into class delcarations.
+ * The parser used to convert from metadata into class declarations.
  */
 const parser = new TWMetadataParser();
 
@@ -81,7 +81,7 @@ let UMLMode = false;
  * @returns                 A promise that resolves when the operation completes.
  */
 export async function install(isUMLMode: boolean = false) {
-    // Load the twconfig file which contains depdencency list.
+    // Load the twconfig file which contains dependency list.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
     const cwd = process.cwd();
@@ -133,8 +133,8 @@ export async function install(isUMLMode: boolean = false) {
         }
 
         // Delete and fully recreate the tw_imports folder
-        fs.rmSync(`${cwd}/tw_imports`, {recursive: true, force: true});
-        fs.mkdirSync(`${cwd}/tw_imports`);
+        FS.rmSync(`${cwd}/tw_imports`, {recursive: true, force: true});
+        FS.mkdirSync(`${cwd}/tw_imports`);
 
         for (const extension of (twConfig.extensionDependencies || [])) {
             const slice = 1 / totalPackages;
@@ -190,7 +190,7 @@ async function getEntity(name: string, kind: string, slice: number, installProgr
     // Thing packages will be handled by templates
     if (kind == 'ThingPackages') return;
 
-    // Skip if excluided
+    // Skip if excluded
     if (excludedEntities[`${kind}/${name}`]) return;
 
     // Skip if already installed
@@ -298,14 +298,14 @@ async function getEntityDependencies(name, kind): Promise<JSONInfoTable<EntityDe
 
     const body = JSON.parse(response.body);
     // Add the declaration for this project
-    if (!fs.existsSync('./tw_imports/Projects/')) {
-        fs.mkdirSync('./tw_imports/Projects/');
+    if (!FS.existsSync('./tw_imports/Projects/')) {
+        FS.mkdirSync('./tw_imports/Projects/');
     }
 
     installedEntities.Projects = installedEntities.Projects || {};
     installedEntities.Projects[name] = true;
 
-    fs.writeFileSync(`./tw_imports/Projects/${name}.d.ts`, `declare interface Projects { ${JSON.stringify(name)}: ProjectEntity; }`)
+    FS.writeFileSync(`./tw_imports/Projects/${name}.d.ts`, `declare interface Projects { ${JSON.stringify(name)}: ProjectEntity; }`)
 
     return body;
 }
@@ -344,14 +344,14 @@ async function getExtension(name: string, slice: number, installProgress: Instal
         // If the typings exist, write the .d.ts file directly.
         const definition = typesResponse.body;
 
-        if (!fs.existsSync(`./tw_imports/Extensions/`)) {
-            fs.mkdirSync(`./tw_imports/Extensions/`);
+        if (!FS.existsSync(`./tw_imports/Extensions/`)) {
+            FS.mkdirSync(`./tw_imports/Extensions/`);
         }
     
         installedEntities.Extensions = installedEntities.Extensions || {};
         installedEntities.Extensions[name] = true;
     
-        fs.writeFileSync(`./tw_imports/Extensions/${name}.d.ts`, definition);
+        FS.writeFileSync(`./tw_imports/Extensions/${name}.d.ts`, definition);
 
         installProgress.progress += slice / 2;
     }
@@ -403,14 +403,14 @@ function importThing(body: any, withInterface = true): void {
     const declaration = parser.declarationOfThing(body);
 
     // Write out the thing
-    if (!fs.existsSync(`./tw_imports/Things/`)) {
-        fs.mkdirSync(`./tw_imports/Things/`);
+    if (!FS.existsSync(`./tw_imports/Things/`)) {
+        FS.mkdirSync(`./tw_imports/Things/`);
     }
 
     installedEntities.Things = installedEntities.Things || {};
     installedEntities.Things[name] = true;
 
-    fs.writeFileSync(`./tw_imports/Things/${name}.d.ts`, `/**
+    FS.writeFileSync(`./tw_imports/Things/${name}.d.ts`, `/**
  * @module ${body.projectName}
  */
 /**
@@ -438,14 +438,14 @@ function importThingTemplate(body: any, withInterface = true): void {
     const hasGenericArgument = GenericThingPackages.includes(body.effectiveThingPackage);
 
     // Write out the thing template
-    if (!fs.existsSync(`./tw_imports/ThingTemplates/`)) {
-        fs.mkdirSync(`./tw_imports/ThingTemplates/`);
+    if (!FS.existsSync(`./tw_imports/ThingTemplates/`)) {
+        FS.mkdirSync(`./tw_imports/ThingTemplates/`);
     }
 
     installedEntities.ThingTemplates = installedEntities.ThingTemplates || {};
     installedEntities.ThingTemplates[name] = true;
 
-    fs.writeFileSync(`./tw_imports/ThingTemplates/${name}.d.ts`, `/**
+    FS.writeFileSync(`./tw_imports/ThingTemplates/${name}.d.ts`, `/**
  * @module ${body.projectName}
  */
 /**
@@ -473,14 +473,14 @@ function importThingShape(body: any, withInterface = true): void {
     const declaration = parser.declarationOfThingShape(body);
 
     // Write out the thing shape
-    if (!fs.existsSync(`./tw_imports/ThingShapes/`)) {
-        fs.mkdirSync(`./tw_imports/ThingShapes/`);
+    if (!FS.existsSync(`./tw_imports/ThingShapes/`)) {
+        FS.mkdirSync(`./tw_imports/ThingShapes/`);
     }
 
     installedEntities.ThingShapes = installedEntities.ThingShapes || {};
     installedEntities.ThingShapes[name] = true;
 
-    fs.writeFileSync(`./tw_imports/ThingShapes/${name}.d.ts`, `/**
+    FS.writeFileSync(`./tw_imports/ThingShapes/${name}.d.ts`, `/**
  * @module ${body.projectName}
  */
 /**
@@ -508,14 +508,14 @@ function importDataShape(body: any, withInterface = true): void {
     const declaration = parser.declarationOfDataShape(body);
 
     // Write out the data shape
-    if (!fs.existsSync(`./tw_imports/DataShapes/`)) {
-        fs.mkdirSync(`./tw_imports/DataShapes/`);
+    if (!FS.existsSync(`./tw_imports/DataShapes/`)) {
+        FS.mkdirSync(`./tw_imports/DataShapes/`);
     }
 
     installedEntities.DataShapes = installedEntities.DataShapes || {};
     installedEntities.DataShapes[name] = true;
 
-    fs.writeFileSync(`./tw_imports/DataShapes/${name}.d.ts`, `/**
+    FS.writeFileSync(`./tw_imports/DataShapes/${name}.d.ts`, `/**
  * @module ${body.projectName}
  */
 /**
@@ -541,14 +541,14 @@ function importResource(body: any, withInterface = true): void {
     let declaration = parser.declarationOfResource(body);
 
     // Write out the resource
-    if (!fs.existsSync(`./tw_imports/Resources/`)) {
-        fs.mkdirSync(`./tw_imports/Resources/`);
+    if (!FS.existsSync(`./tw_imports/Resources/`)) {
+        FS.mkdirSync(`./tw_imports/Resources/`);
     }
 
     installedEntities.Resources = installedEntities.Resources || {};
     installedEntities.Resources[name] = true;
 
-    fs.writeFileSync(`./tw_imports/Resources/${name}.d.ts`, `/**
+    FS.writeFileSync(`./tw_imports/Resources/${name}.d.ts`, `/**
  * @module ${body.projectName}
  */
 /**
@@ -602,8 +602,8 @@ function importMashup(body: any, withInterface = true): void {
     let declaration = parser.declarationOfMashup(body);
 
     // Write out the resource
-    if (!fs.existsSync(`./tw_imports/Mashups/`)) {
-        fs.mkdirSync(`./tw_imports/Mashups/`);
+    if (!FS.existsSync(`./tw_imports/Mashups/`)) {
+        FS.mkdirSync(`./tw_imports/Mashups/`);
     }
 
     installedEntities.Mashups = installedEntities.Mashups || {};
@@ -611,7 +611,7 @@ function importMashup(body: any, withInterface = true): void {
 
     if (UMLMode) {
         // In UML mode write the mashup class
-        fs.writeFileSync(`./tw_imports/Mashups/${name}.d.ts`, `/**
+        FS.writeFileSync(`./tw_imports/Mashups/${name}.d.ts`, `/**
  * @module ${body.projectName}
  */
 /**
@@ -627,7 +627,7 @@ ${declaration}${withInterface ? `\n\ndeclare interface Mashups {
     }
     else {
         // In non-UML mode, write just the interface declaration
-        fs.writeFileSync(`./tw_imports/Mashups/${name}.d.ts`, withInterface ? `/**
+        FS.writeFileSync(`./tw_imports/Mashups/${name}.d.ts`, withInterface ? `/**
  * @module ${body.projectName}
  */
 /**
@@ -655,14 +655,14 @@ declare interface Mashups {
  * @param body              The entity metadata.
  */
 function importEntityDeclaration(name: string, kind: string, description: string, genericArgument?: string, withInterface = true, body?: any): void {
-    if (!fs.existsSync(`./tw_imports/${kind}/`)) {
-        fs.mkdirSync(`./tw_imports/${kind}/`);
+    if (!FS.existsSync(`./tw_imports/${kind}/`)) {
+        FS.mkdirSync(`./tw_imports/${kind}/`);
     }
 
     installedEntities[kind] = installedEntities[kind] || {};
     installedEntities[kind][name] = true;
 
-    fs.writeFileSync(`./tw_imports/${kind}/${name}.d.ts`, withInterface ? `/**
+    FS.writeFileSync(`./tw_imports/${kind}/${name}.d.ts`, withInterface ? `/**
  * @module ${body?.projectName}
  */
 declare interface ${kind} { 

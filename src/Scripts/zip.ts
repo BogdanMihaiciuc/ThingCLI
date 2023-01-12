@@ -1,5 +1,5 @@
 import { TWConfig } from 'bm-thing-transformer';
-import * as fs from 'fs';
+import * as FS from 'fs';
 import AdmZip from 'adm-zip';
 import { TSUtilities } from '../Utilities/TSUtilities';
 
@@ -25,11 +25,11 @@ export async function zip(): Promise<void> {
     process.stdout.write(`\x1b[2m❯\x1b[0m Creating extension package`);
 
     // Clear the zip output folder to remove the previous build results
-    if (fs.existsSync(`${cwd}/zip`)) {
-        fs.rmSync(`${cwd}/zip`, {force: true, recursive: true});
+    if (FS.existsSync(`${cwd}/zip`)) {
+        FS.rmSync(`${cwd}/zip`, {force: true, recursive: true});
     }
 
-    fs.mkdirSync(`${cwd}/zip`);
+    FS.mkdirSync(`${cwd}/zip`);
 
     /**
      * Creates a zip archive with the contents of the given path.
@@ -57,7 +57,7 @@ export async function zip(): Promise<void> {
         const baseOutPath = `${cwd}/zip/projects`;
 
         // Ensure that the base out path exists
-        if (!fs.existsSync(baseOutPath)) fs.mkdirSync(baseOutPath)
+        if (!FS.existsSync(baseOutPath)) FS.mkdirSync(baseOutPath)
 
         // Zip each project
         for (const p of TSUtilities.projects()) {
@@ -70,7 +70,7 @@ export async function zip(): Promise<void> {
         // For other commands, it is necessary to keep the zips separate and import them in the appropriate order
         if (command == 'build') {
             await zipPath(zipName, baseOutPath, `${cwd}/zip`);
-            fs.rmSync(baseOutPath, {recursive: true, force: true});
+            FS.rmSync(baseOutPath, {recursive: true, force: true});
         }
     }
     else {
