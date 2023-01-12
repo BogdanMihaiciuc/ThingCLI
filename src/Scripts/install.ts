@@ -15,7 +15,7 @@ interface InstallProgress {
     progress: number;
 
     /**
-     * A string displayed at the end of the progess bar that indicates which entity
+     * A string displayed at the end of the progress bar that indicates which entity
      * is currently being processed.
      */
     entity: string;
@@ -54,7 +54,7 @@ const installedEntities: Record<string, Record<string, boolean>> = {};
 /**
  * A map that keeps track of used entity names to make it possible to install entities that have the
  * same name but different entity kinds.
- * Its keys are the sanitized names and its values are the correponding thingworx names.
+ * Its keys are the sanitized names and its values are the corresponding thingworx names.
  */
 const installedEntityNames: Set<string> = new Set;
 
@@ -64,7 +64,7 @@ const installedEntityNames: Set<string> = new Set;
 const excludedEntities: Record<string, boolean> = {};
 
 /**
- * The parser used to convert from metadata into class delcarations.
+ * The parser used to convert from metadata into class declarations.
  */
 const parser = new TWMetadataParser();
 
@@ -81,7 +81,7 @@ let UMLMode = false;
  * @returns                 A promise that resolves when the operation completes.
  */
 export async function install(isUMLMode: boolean = false) {
-    // Load the twconfig file which contains depdencency list.
+    // Load the twconfig file which contains dependency list.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
     const cwd = process.cwd();
@@ -190,7 +190,7 @@ async function getEntity(name: string, kind: string, slice: number, installProgr
     // Thing packages will be handled by templates
     if (kind == 'ThingPackages') return;
 
-    // Skip if excluided
+    // Skip if excluded
     if (excludedEntities[`${kind}/${name}`]) return;
 
     // Skip if already installed
