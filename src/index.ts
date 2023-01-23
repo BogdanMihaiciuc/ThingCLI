@@ -14,9 +14,8 @@ import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
 import { generateAPI } from './Scripts/generate-api';
 import * as fs from 'fs';
-import * as dotenv from 'dotenv';
+import 'dotenv/config';
 
-dotenv.config();
 const [, , command, ...args] = process.argv;
 
 Error.stackTraceLimit = 0;
