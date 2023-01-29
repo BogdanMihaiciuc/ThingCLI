@@ -1,3 +1,9 @@
+# 1.6
+
+Adds support for specifying which .env file to use. ([stefan-lacatus](https://github.com/stefan-lacatus)) 
+
+Resolves an issue with the `install` command that caused an error to be thrown when attempting to import `Resource` entities.
+
 # 1.5.1
 
 The `upload` command can now take an additional argument `--extensions` that, when specified, causes the command to also upload any extensions in the `extensions` directory in the root of the project to the thingworx server before uploading the project extension.
