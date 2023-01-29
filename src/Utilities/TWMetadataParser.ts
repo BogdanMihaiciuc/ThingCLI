@@ -532,7 +532,7 @@ export class TWMetadataParser {
         const sanitizedName = this.sanitizedEntityName('Resources', body.name);
         let declaration = `declare class ${sanitizedName} extends ResourceEntity {\n\n`;
 
-        for (const service of Object.values(body.effectiveShape.serviceDefinitions) as any[]) {
+        for (const service of Object.values(body.serviceDefinitions) as any[]) {
             declaration += `
     /**
      * ${service.description}

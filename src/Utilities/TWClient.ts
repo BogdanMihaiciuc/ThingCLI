@@ -337,7 +337,7 @@ export class TWClient {
      *                      the operation finishes.
      */
     static async getEntity(name: string, kind: string): Promise<TWClientResponse> {
-        const url = `${kind}/${name}${kind == 'Resources' ? '/metadata' : ''}`;
+        const url = `${kind}/${name}${kind == 'Resources' ? '/Metadata' : ''}`;
         return await this._performRequest({url}, 'get');
     }
 
