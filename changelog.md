@@ -1,3 +1,7 @@
+# 1.6.1
+
+Updates to transformer version 1.6.1, which includes the type definitions for `SQLThing`.
+
 # 1.6
 
 Adds support for specifying which .env file to use. ([stefan-lacatus](https://github.com/stefan-lacatus)) 
