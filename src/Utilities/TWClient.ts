@@ -1,8 +1,5 @@
-import type { TWPackageJSON, TWPackageJSONConnectionDetails } from "../Packages/TWPackageJSON";
-import type * as fs from 'fs';
-import * as http from 'http';
-import * as https from 'https';
-import * as crypto from 'crypto';
+import type { TWPackageJSON, TWPackageJSONConnectionDetails } from '../Packages/TWPackageJSON';
+
 
 /**
  * The options that may be passed to a thingworx request.
@@ -122,172 +119,66 @@ export class TWClient {
     };
 
     /**
-     * Sets the appropriate authentication fields on the given request
-     * headers object using the connection details.
-     * @param options       The request options object on which to add authorization details.
-     */
-    private static _authorizeRequest(options: http.RequestOptions): void {
-
-        // Try to authorize using an app key if provided, which is the preferred method
-        if (this._connectionDetails.thingworxAppKey) {
-            options.headers!.appKey = this._connectionDetails.thingworxAppKey;
-        }
-        // Otherwise use the username and password combo
-        else if (this._connectionDetails.thingworxUser && this._connectionDetails.thingworxPassword) {
-            const username = this._connectionDetails.thingworxUser;
-            const password = this._connectionDetails.thingworxPassword;
-            options.auth = username + ':' + password;
-        }
-        else {
-            throw new Error('Unable to authorize a request to thingworx because an app key or username/password combo was not provided.');
-        }
-    }
-
-    /**
      * Performs a request, returning a promise that resolves with its response.
      * @param options       The requests's options.
      * @returns             A promise that resolves with the response when
      *                      the request finishes.
      */
     private static async _performRequest(options: TWClientRequestOptions, method: 'get' | 'post' = 'post'): Promise<TWClientResponse> {
-        const {thingworxServer: host} = this._connectionDetails;
+      const { thingworxServer: host } = this._connectionDetails;
 
-        // Automatically prepend the base thingworx url
-        options.url = `${host}/Thingworx/${options.url}`;
+      // Automatically prepend the base thingworx url
+      options.url = `${host}/Thingworx/${options.url}`;
 
-        // Automatically add the thingworx specific headers to options
-        const headers: https.RequestOptions['headers'] = Object.assign({}, options.headers || {}, {
-            'X-XSRF-TOKEN': 'TWX-XSRF-TOKEN-VALUE',
-            'X-THINGWORX-SESSION': 'true',
-            Accept: 'application/json'
-        });
+      // Automatically add the thingworx specific headers to options
+      const headers = Object.assign({}, options.headers || {}, {
+        'X-XSRF-TOKEN': 'TWX-XSRF-TOKEN-VALUE',
+        'X-THINGWORX-SESSION': 'true',
+        Accept: 'application/json',
+      });
 
-        const url = new URL(options.url);
-        const requestOptions: https.RequestOptions = {
-            host: url.host,
-            hostname: url.hostname,
-            protocol: url.protocol,
-            port: url.port,
-            path: `${url.pathname}${url.search || ''}`
-        };
+      const fetchOptions: RequestInit = { method, headers };
 
-        // If a body is specified, add the content length header
-        let body: string | Buffer | undefined;
-        if (options.body) {
-            // If the body is specified as an object, stringify it
-            if (typeof options.body == 'object') {
-                body = JSON.stringify(options.body);
-            }
-            else {
-                body = options.body;
-            }
+      // Try to authorize using an app key if provided, which is the preferred method
+      if (this._connectionDetails.thingworxAppKey) {
+        headers.appKey = this._connectionDetails.thingworxAppKey;
+      }
+      // Otherwise use the username and password combo
+      else if (
+        this._connectionDetails.thingworxUser &&
+        this._connectionDetails.thingworxPassword
+      ) {
+       headers.Authorization = 'Basic ' + Buffer.from(this._connectionDetails.thingworxUser + ':' + this._connectionDetails.thingworxPassword).toString('base64');
+      } else {
+        throw new Error(
+          'Unable to authorize a request to thingworx because an app key or username/password combo was not provided.'
+        );
+      }
 
-            // Set the content-length header
-            headers['Content-Length'] = Buffer.byteLength(body, 'utf8');
+      if (options.body) {
+        // If the body is specified as an object, stringify it
+        if (typeof options.body == 'object') {
+          fetchOptions.body = JSON.stringify(options.body);
+        } else {
+          fetchOptions.body = options.body;
         }
-        else if (options.formData) {
-            // If a "form-data" is specified, set the content type to multipart/form-data
-            // and build the multipart request body
-            const boundary = `-------------------------${crypto.randomUUID()}`;
+      } else if (options.formData) {
+        fetchOptions.body = options.formData;
+      }
 
-            headers['Content-type'] = `multipart/form-data;boundary=${boundary}`;
+      const response = await fetch(options.url, fetchOptions);
 
-            // NOTE: Form data is only expected to have one key
-            for (const k in options.formData) {
-                const readStream = options.formData[k];
-                const filename = readStream.path.toString().split('/').pop();
-
-                // Prepare the multipart header and footer
-                const bodyHeader = Buffer.from([
-                    `--${boundary}`,
-                    `Content-Disposition: form-data; name=${k}; filename=${filename}`,
-                    '\r\n',
-                ].join('\r\n'));
-
-                const bodyFooter = Buffer.from(`\r\n--${boundary}--\r\n`);
-
-                // Read the file into a buffer
-                const fileChunks: (Buffer)[] = [bodyHeader];
-                await new Promise((resolve, reject) => {
-                    readStream.once('error', err => {
-                        reject(err);
-                    });
-
-                    readStream.once('end', resolve);
-
-                    readStream.on('data', chunk => {
-                        if (typeof chunk == 'string') {
-                            fileChunks.push(Buffer.from(chunk));
-                        }
-                        else {
-                            fileChunks.push(chunk);
-                        }
-                    });
-                });
-
-                // Merge the body header, file content and footer
-                fileChunks.push(bodyFooter);
-                body = Buffer.concat(fileChunks);
-
-                // This will only support a single multipart entry as the client currently never
-                // performs any request with multiple entries - the body is reset on each iteration
-            };
-
-            if (!body) {
-                throw new Error('Unable to perform request because an empty multipart form was specified');
-            }
-
-            headers['Content-Length'] = body.length;
-        }
-
-        requestOptions.headers = headers;
-        requestOptions.method = method.toUpperCase();
-
-        // Set the appropriate authorization header
-        this._authorizeRequest(requestOptions);
-
-        const client = requestOptions.protocol == 'https:' ? https : http;
-
-        // Create and wait for the request to finish
-        return await new Promise((resolve, reject) => {
-            const request = client.request(requestOptions, (response) => {
-                const chunks: (string)[] = [];
-                
-                response.setEncoding('utf8');
-                response.on('data', chunk => chunks.push(chunk));
-                response.on('end', () => {
-                    // Join the chunks to obtain the full response
-                    const body = chunks.join('');
-
-                    // Create and return a 'request'-compatible response object
-                    resolve({
-                        body,
-                        headers: response.headers,
-                        statusCode: response.statusCode,
-                        statusMessage: response.statusMessage,
-                    });
-                });
-            });
-
-            request.on('error', (err) => {
-              reject(err);
-            });
-        
-            request.on('timeout', () => {
-              request.destroy();
-              reject(new Error('The request timed out'));
-            });
-        
-            if (body) {
-                request.write(body);
-            }
-            request.end();
-        });
+      return {
+        body: await response.text(),
+        headers: response.headers,
+        statusCode: response.status,
+        statusMessage: response.statusText,
+      };
     }
 
     /**
      * Deletes the given extension from the thingworx server.
-     * @param name      The name of the extenion to remove.
+     * @param name      The name of the extension to remove.
      * @returns         A promise that resolves with the server response when the
      *                  operation finishes.
      */
@@ -307,10 +198,10 @@ export class TWClient {
      * @returns         A promise that resolves with the server response when
      *                  the operation finishes.
      */
-    static async importExtension(data: {file: fs.ReadStream}): Promise<TWClientResponse> {
+    static async importExtension(formData: FormData): Promise<TWClientResponse> {
         return await this._performRequest({
             url: `ExtensionPackageUploader?purpose=import`,
-            formData: data
+            formData: formData,
         });
     }
 
@@ -372,16 +263,16 @@ export class TWClient {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                searchExpression: "**",
+                searchExpression: '**',
                 withPermissions: false,
-                sortBy: "name",
+                sortBy: 'name',
                 isAscending: true,
                 searchDescriptions: true,
                 aspects: {
                     isSystemObject: false
                 },
                 projectName: name,
-                searchText: ""
+                searchText: ''
             })
         });
     }

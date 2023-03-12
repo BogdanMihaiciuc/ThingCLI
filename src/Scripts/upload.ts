@@ -76,9 +76,13 @@ export async function upload(): Promise<void> {
 async function uploadZip(path: string, name?: string): Promise<void> {
     process.stdout.write(`\x1b[2m❯\x1b[0m Uploading${name ? ` ${name}` : ''} to ${TWClient.server}`);
 
-    const formData = {
-        file: FS.createReadStream(path)
-    };
+   const formData = new FormData();
+
+   formData.append(
+     "file",
+     new Blob([FS.readFileSync(path)]),
+     path.toString().split("/").pop()
+   );
 
     const response = await TWClient.importExtension(formData);
 
