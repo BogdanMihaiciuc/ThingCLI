@@ -13,6 +13,7 @@ import { install } from './Scripts/install';
 import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
 import { generateAPI } from './Scripts/generate-api';
+import { exportCommand } from './Scripts/export';
 import * as fs from 'fs';
 import 'dotenv/config';
 
@@ -92,6 +93,9 @@ async function main() {
         case Commands.generateAPI:
             await generateAPI();
             break;
+        case Commands.export:
+            await exportCommand();
+            break;
         default:
             console.error(`Unknown command "${command}" specified.`);
     }
@@ -116,10 +120,10 @@ Available commands:
  * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug] [--trace]
    Builds the thingworx extension
 
- * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version]
+ * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--entity-import]
    Builds and uploads the thingworx extension
 
- * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version]
+ * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--entity-import]
    Uploads the extension then runs deployment scripts
 
  * \x1b[1mremove\x1b[0m [--merged] [--separate]
@@ -127,6 +131,9 @@ Available commands:
 
  * \x1b[1madd-project\x1b[0m
    Adds a new project to the repository
+
+ * \x1b[1mexport\x1b[0m
+   Exports xml only projects from the thingworx server 
 
  * \x1b[1mgenerate-api\x1b[0m
    EXPERIMENTAL: Builds declarations out of exported entities that can be used in other projects
@@ -137,3 +144,4 @@ Available commands:
  * \x1b[1mupgrade\x1b[0m
    Upgrades from a gulp project to a twc project`);
 }
+

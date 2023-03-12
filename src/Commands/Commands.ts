@@ -60,4 +60,9 @@ export const enum Commands {
      * The upgrade command that upgrades from a gulpfile build system to a bm-thing-cli build system.
      */
     upgrade = 'upgrade',
+
+    /**
+     * The export command exports project entities from the server as XML files
+     */
+    export = 'export',
 }

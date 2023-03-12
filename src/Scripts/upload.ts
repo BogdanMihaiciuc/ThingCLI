@@ -1,5 +1,6 @@
 import * as FS from 'fs';
 import * as Path from 'path';
+import readline from 'readline';
 import { TWConfig } from 'bm-thing-transformer';
 import { TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
@@ -23,10 +24,6 @@ export async function upload(): Promise<void> {
     // When the entity import flag is specified, don't import zip files as extensions, but rather as 
     // source control entity imports
     const isEntityImport = args.includes("--entityImport") || args.includes("--entity-import");
-    
-    if (isEntityImport) {
-        process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Importing project as entities using source control import \n`);
-    }
 
     // Load the twconfig file which contains the version and package name information.
     const packageJSON = require(`${process.cwd()}/package.json`);
@@ -89,6 +86,8 @@ export async function upload(): Promise<void> {
  * @param projectName Name of the project being uploaded
  */
 async function importSourceControlledZip(path: string, zipName: string, projectName: string) {
+    process.stdout.write(`\x1b[2m❯\x1b[0m Uploading ${projectName} to ${TWClient.server} as entities`);
+
     // Details for where the entities are imported into thingworx
     const REPOSITORY_NAME = process.env.THINGWORX_REPO ?? 'SystemRepository';
     const REPOSITORY_PATH = process.env.THINGWORX_REPO_PATH ?? '/';
@@ -101,6 +100,9 @@ async function importSourceControlledZip(path: string, zipName: string, projectN
     await TWClient.sourceControlImport(projectName, REPOSITORY_NAME, `${REPOSITORY_PATH}/${projectName}`,);
     // step 4: cleanup
     await TWClient.deleteRemoteDirectory(REPOSITORY_NAME, `${REPOSITORY_PATH}/${projectName}`);
+    
+    readline.clearLine(process.stdout, -1);
+    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Uploaded ${projectName} to ${TWClient.server} as entities \n`);
 }
 
 /**

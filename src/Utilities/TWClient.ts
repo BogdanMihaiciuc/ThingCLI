@@ -81,6 +81,12 @@ export class TWClient {
     private static _cachedConnectionDetails?: TWPackageJSONConnectionDetails;
 
     /**
+     * The cached header to use for Authentication. 
+     * Automatically set when the _cachedConnectionDetails are accessed
+     */
+    private static _authenticationHeaders?: Record<string, string>;
+
+    /**
      * The connection details to be used.
      */
     private static get _connectionDetails(): TWPackageJSONConnectionDetails {
@@ -109,6 +115,23 @@ export class TWClient {
             };
         }
 
+        // Try to authorize using an app key if provided, which is the preferred method
+        if (this._connectionDetails.thingworxAppKey) {
+            this._authenticationHeaders = { appKey: this._connectionDetails.thingworxAppKey };
+        }
+        // Otherwise use the username and password combo
+        else if (
+            this._connectionDetails.thingworxUser &&
+            this._connectionDetails.thingworxPassword
+        ) {
+            const basicAuth = Buffer.from(this._connectionDetails.thingworxUser + ':' + this._connectionDetails.thingworxPassword).toString('base64');
+            this._authenticationHeaders = { Authorization: 'Basic ' + basicAuth };
+        } else {
+            throw new Error(
+                'Unable to authorize a request to thingworx because an app key or username/password combo was not provided.'
+            );
+        }
+
         return this._cachedConnectionDetails;
     };
 
@@ -126,55 +149,39 @@ export class TWClient {
      *                      the request finishes.
      */
     private static async _performRequest(options: TWClientRequestOptions, method: 'get' | 'post' = 'post'): Promise<TWClientResponse> {
-      const { thingworxServer: host } = this._connectionDetails;
+        const { thingworxServer: host } = this._connectionDetails;
 
-      // Automatically prepend the base thingworx url
-      options.url = `${host}/Thingworx/${options.url}`;
+        // Automatically prepend the base thingworx url
+        options.url = `${host}/Thingworx/${options.url}`;
 
-      // Automatically add the thingworx specific headers to options
-      const headers = Object.assign({}, options.headers || {}, {
-        'X-XSRF-TOKEN': 'TWX-XSRF-TOKEN-VALUE',
-        'X-THINGWORX-SESSION': 'true',
-        Accept: 'application/json',
-      });
+        // Automatically add the thingworx specific headers to options
+        const headers = Object.assign({}, options.headers || {}, {
+            'X-XSRF-TOKEN': 'TWX-XSRF-TOKEN-VALUE',
+            'X-THINGWORX-SESSION': 'true',
+            Accept: 'application/json',
+        }, this._authenticationHeaders);
 
-      const fetchOptions: RequestInit = { method, headers };
+        const fetchOptions: RequestInit = { method, headers };
 
-      // Try to authorize using an app key if provided, which is the preferred method
-      if (this._connectionDetails.thingworxAppKey) {
-        headers.appKey = this._connectionDetails.thingworxAppKey;
-      }
-      // Otherwise use the username and password combo
-      else if (
-        this._connectionDetails.thingworxUser &&
-        this._connectionDetails.thingworxPassword
-      ) {
-       headers.Authorization = 'Basic ' + Buffer.from(this._connectionDetails.thingworxUser + ':' + this._connectionDetails.thingworxPassword).toString('base64');
-      } else {
-        throw new Error(
-          'Unable to authorize a request to thingworx because an app key or username/password combo was not provided.'
-        );
-      }
-
-      if (options.body) {
-        // If the body is specified as an object, stringify it
-        if (typeof options.body == 'object') {
-          fetchOptions.body = JSON.stringify(options.body);
-        } else {
-          fetchOptions.body = options.body;
+        if (options.body) {
+            // If the body is specified as an object, stringify it
+            if (typeof options.body == 'object') {
+                fetchOptions.body = JSON.stringify(options.body);
+            } else {
+                fetchOptions.body = options.body;
+            }
+        } else if (options.formData) {
+            fetchOptions.body = options.formData;
         }
-      } else if (options.formData) {
-        fetchOptions.body = options.formData;
-      }
 
-      const response = await fetch(options.url, fetchOptions);
+        const response = await fetch(options.url, fetchOptions);
 
-      return {
-        body: await response.text(),
-        headers: response.headers,
-        statusCode: response.status,
-        statusMessage: response.statusText,
-      };
+        return {
+            body: await response.text(),
+            headers: response.headers,
+            statusCode: response.status,
+            statusMessage: response.statusText,
+        };
     }
 
     /**
@@ -189,7 +196,7 @@ export class TWClient {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: {packageName: name}
+            body: { packageName: name }
         });
     }
 
@@ -230,7 +237,7 @@ export class TWClient {
      */
     static async getEntity(name: string, kind: string): Promise<TWClientResponse> {
         const url = `${kind}/${name}${kind == 'Resources' ? '/Metadata' : ''}`;
-        return await this._performRequest({url}, 'get');
+        return await this._performRequest({ url }, 'get');
     }
 
     /**
@@ -286,7 +293,7 @@ export class TWClient {
      */
     static async getExtensionTypes(name: string): Promise<TWClientResponse> {
         const url = `Common/extensions/${name}/ui/@types/index.d.ts`;
-        return await this._performRequest({url}, 'get');
+        return await this._performRequest({ url }, 'get');
     }
 
     /**
@@ -301,7 +308,7 @@ export class TWClient {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({packageName: name})
+            body: JSON.stringify({ packageName: name })
         });
     }
 
@@ -333,7 +340,7 @@ export class TWClient {
                     useDefaultDataProvider: false,
                     withSubsystems: false,
                 },
-            }); 
+            });
             if (response.statusCode != 200) {
                 throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
             }
@@ -438,4 +445,66 @@ export class TWClient {
         }
     }
 
+    /**
+     * Execute a source control export of a project
+     * @param project ThingWorx project name
+     * @param fileRepository Name of the FileRepository to store the export
+     * @param path Remote path to where the files should be exported to
+     * @param name Name of the folder where the files are stored
+     * @returns An URL to where the zip containing the exports is found
+     */
+    static async sourceControlExport(
+        project: string,
+        fileRepository: string,
+        path: string,
+        name: string,
+    ): Promise<string> {
+        const { thingworxServer: host } = this._connectionDetails;
+
+        try {
+            // Do a ExportToSourceControl to export the project
+            const exportResponse = await this._performRequest({
+                url: 'Resources/SourceControlFunctions/Services/ExportSourceControlledEntities',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    projectName: project,
+                    repositoryName: fileRepository,
+                    path: path,
+                    name: name,
+                    exportMatchingModelTags: true,
+                    includeDependents: false,
+                },
+            });
+            if (exportResponse.statusCode != 200) {
+                throw new Error(`Got status code ${exportResponse.statusCode} (${exportResponse.statusMessage}). Body: ${exportResponse.body}`);
+            }
+            // Create a zip from the folder that was exported
+            await this._performRequest({
+                url: `Things/${fileRepository}/Services/CreateZipArchive`,
+                headers: {
+                    'Content-Type': 'application/json'
+                }, 
+                body: {
+                    newFileName: project + ".zip",
+                    path: path,
+                    files: path + "/" + project + "/",
+                },
+            });
+            return `${host}/Thingworx/FileRepositories/${fileRepository}/${path}/${project}.zip`;
+        } catch (err) {
+            throw new Error(`Error executing source control export for project '${project}' because: ${err}`);
+        }
+    }
+
+    /**
+     * Downloads a remote file into the given target path
+     * @param fileUrl Path to the file to download
+     * @param targetPath Local path to where the file should be saved
+     */
+    static async downloadFile(fileUrl: string, targetPath: string) {
+        const response = await fetch(fileUrl, { headers: this._authenticationHeaders });
+        fs.writeFileSync(targetPath, Buffer.from(await (await response.blob()).arrayBuffer()));
+    }
 }
