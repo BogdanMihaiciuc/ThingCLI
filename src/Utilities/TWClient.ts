@@ -1,5 +1,6 @@
 import type { TWPackageJSON, TWPackageJSONConnectionDetails } from '../Packages/TWPackageJSON';
-
+import * as fs from 'fs';
+import * as Path from 'path';
 
 /**
  * The options that may be passed to a thingworx request.
@@ -7,7 +8,7 @@ import type { TWPackageJSON, TWPackageJSONConnectionDetails } from '../Packages/
 interface TWClientRequestOptions {
 
     /**
-     * The endpoint to invoke/
+     * The endpoint to invoke
      */
     url: string;
 
@@ -25,7 +26,7 @@ interface TWClientRequestOptions {
     /**
      * An optional multipart body to send.
      */
-    formData?: Record<string, fs.ReadStream>;
+    formData?: FormData;
 }
 
 /**
@@ -42,7 +43,7 @@ interface TWClientResponse {
     /**
      * The response headers.
      */
-    headers: http.IncomingHttpHeaders;
+    headers: Headers;
 
     /**
      * The status code.
@@ -302,6 +303,139 @@ export class TWClient {
             },
             body: JSON.stringify({packageName: name})
         });
+    }
+
+    /**
+     * Executes the source control import of a path on the file repository into ThingWorx
+     * @param project Name of the project being imported
+     * @param fileRepository Name of the ThingWorx FileRepository thing from where the import happens
+     * @param path Path in the `fileRepository` where the entities are
+     * @returns The response from the server
+     */
+    static async sourceControlImport(
+        project: string,
+        fileRepository: string,
+        path: string,
+    ): Promise<TWClientResponse> {
+        const url = `Resources/SourceControlFunctions/Services/ImportSourceControlledEntities`;
+
+        try {
+            const response = await this._performRequest({
+                url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    repositoryName: fileRepository,
+                    path: path,
+                    includeDependents: false,
+                    overwritePropertyValues: true,
+                    useDefaultDataProvider: false,
+                    withSubsystems: false,
+                },
+            }); 
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error executing source control import for project '${project}' because: ${err}`);
+        }
+    }
+
+    /**
+     * Uploads a local file into a ThingWorx file repository
+     * @param filePath Local path to the folder the file is in
+     * @param fileName Name of the file to be uploaded
+     * @param fileRepository Name of the TWX file repository the file should be uploaded to
+     * @param targetPath Remote path in the TWX file repository where the file should be stored
+     * @returns details about the success status
+     */
+    static async uploadFile(
+        filePath: string,
+        fileName: string,
+        fileRepository: string,
+        targetPath: string,
+    ): Promise<TWClientResponse> {
+        try {
+            // load the file from the build folder
+            let formData = new FormData();
+            formData.append('upload-repository', fileRepository);
+            formData.append('upload-path', targetPath);
+            formData.append('upload-files', new Blob([fs.readFileSync(Path.join(filePath, fileName))]), fileName);
+            formData.append('upload-submit', 'Upload');
+
+            // POST request to the Thingworx FileRepositoryUploader endpoint
+            const response = await this._performRequest({ url: 'FileRepositoryUploader', formData });
+
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error uploading file '${filePath}' into repository because: ${err}`);
+        }
+    }
+
+    /**
+     * Performs a unzip operation on a remote file in a ThingWorx file repository
+     * @param fileRepository Name of the TWX FileRepository thing
+     * @param filePath Remote path to where the zip file is
+     * @param targetFolder Remote path to where the file should be extracted
+     * @returns 
+     */
+    static async unzipAndExtractRemote(
+        fileRepository: string,
+        filePath: string,
+        targetFolder: string,
+    ) {
+        const url = `Things/${fileRepository}/Services/ExtractZipArchive`;
+
+        try {
+            const response = await this._performRequest({
+                url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    path: targetFolder,
+                    zipFileName: filePath,
+                }
+            });
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error executing remote file unzip because: ${err}`);
+        }
+    }
+
+    /**
+     * Deletes a remote folder in a ThingWorx file repository
+     * @param fileRepository Name of the TWX FileRepository thing
+     * @param targetFolder Remote path to the folder to be deleted
+     * @returns details about the success status
+     */
+    static async deleteRemoteDirectory(fileRepository: string, targetFolder: string) {
+        const url = `Things/${fileRepository}/Services/DeleteFolder`;
+        try {
+            const response = await this._performRequest({
+                url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    path: targetFolder,
+                },
+            });
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error executing remote folder delete because: ${err}`);
+        }
     }
 
 }

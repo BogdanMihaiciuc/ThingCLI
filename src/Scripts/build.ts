@@ -29,6 +29,9 @@ export async function build(): Promise<DeploymentEndpoint[]> {
     const isMerged = args.includes('--merged');
     const isSeparate = args.includes('--separate') || !isMerged;
 
+    // If the entity import flag is set, don't create the metadata.xml files and use source control imports
+    const isEntityImport = args.includes("--entityImport") || args.includes("--entity-import") ;
+
     if (twConfig.projectName == '@auto') {
         // If both modes are specified throw an error
         if (isMerged && isSeparate) {
@@ -231,31 +234,34 @@ export async function build(): Promise<DeploymentEndpoint[]> {
         }
 
 
-        // Copy and update the metadata file
-        const metadataFile = FS.readFileSync(`${process.cwd()}/metadata.xml`, 'utf8');
-        const metadataXML = await parseStringPromise(metadataFile);
+        // Emit the metadata.xml file if the user wants to package everything as extensions
+        if (!isEntityImport) {
+            // Copy and update the metadata file
+            const metadataFile = FS.readFileSync(`${process.cwd()}/metadata.xml`, 'utf8');
+            const metadataXML = await parseStringPromise(metadataFile);
 
-        // In multi project mode, for separate builds, append the project name to the package name
-        let packageName = packageJSON.name;
-        if (isSeparate && twConfig.projectName == '@auto') {
-            packageName += `-${project.name}`;
+            // In multi project mode, for separate builds, append the project name to the package name
+            let packageName = packageJSON.name;
+            if (isSeparate && twConfig.projectName == '@auto') {
+                packageName += `-${project.name}`;
+            }
+
+            const extensionPackage = metadataXML.Entities.ExtensionPackages[0].ExtensionPackage[0];
+            extensionPackage.$.name = packageName;
+            if (packageJSON.author) {
+                extensionPackage.$.vendor = packageJSON.author;
+            }
+            extensionPackage.$.minimumThingWorxVersion = twConfig.minimumThingWorxVersion || packageJSON.minimumThingWorxVersion || '9.0.0';
+            // For the package version, omit any beta or alpha suffix
+            extensionPackage.$.packageVersion = packageJSON.version.split('-')[0];
+            extensionPackage.$.description = packageJSON.description;
+            extensionPackage.$.buildNumber = JSON.stringify({gitHubURL: packageJSON.autoUpdate?.gitHubURL || ''});
+
+            const builder = new Builder();
+            const outXML = builder.buildObject(metadataXML);
+
+            FS.writeFileSync(`${outPath}/metadata.xml`, outXML);
         }
-
-        const extensionPackage = metadataXML.Entities.ExtensionPackages[0].ExtensionPackage[0];
-        extensionPackage.$.name = packageName;
-        if (packageJSON.author) {
-            extensionPackage.$.vendor = packageJSON.author;
-        }
-        extensionPackage.$.minimumThingWorxVersion = twConfig.minimumThingWorxVersion || packageJSON.minimumThingWorxVersion || '9.0.0';
-        // For the package version, omit any beta or alpha suffix
-        extensionPackage.$.packageVersion = packageJSON.version.split('-')[0];
-        extensionPackage.$.description = packageJSON.description;
-        extensionPackage.$.buildNumber = JSON.stringify({gitHubURL: packageJSON.autoUpdate?.gitHubURL || ''});
-
-        const builder = new Builder();
-        const outXML = builder.buildObject(metadataXML);
-
-        FS.writeFileSync(`${outPath}/metadata.xml`, outXML);
 
         // Write out the diagnostic messages at the end of the task
         if (formattedDiagnostics) {
