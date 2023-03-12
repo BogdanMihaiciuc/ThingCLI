@@ -1,7 +1,7 @@
 import { TWThingTransformerFactory, TWConfig, TWEntityKind } from 'bm-thing-transformer';
 import * as FS from 'fs';
 import * as ts from 'typescript';
-import { TSUtilities } from '../Utilities/TSUtilities';
+import { TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { APIGenerator } from '../Utilities/APIDeclarationGenerator';
 
 /**
@@ -23,7 +23,7 @@ export function generateAPI() {
     twConfig.store = {};
 
     // Create the typescript project and emit using a transformer
-    const program = TSUtilities.programWithPath(cwd);
+    const program = TWProjectUtilities.programWithPath(cwd);
     const tsFiles = program.getSourceFiles().filter(file => !file.fileName.endsWith('.d.ts'));
     for (const file of tsFiles) {
         ts.transform(file, [TWThingTransformerFactory(program, cwd, false, false, twConfig)], program.getCompilerOptions());
@@ -99,7 +99,7 @@ export function generateAPI() {
     `;
 
     // Write the declarations to a .d.ts file
-    TSUtilities.ensurePath(`${cwd}/api`, cwd);
+    TWProjectUtilities.ensurePath(`${cwd}/api`, cwd);
     FS.writeFileSync(`${cwd}/api/Generated.d.ts`, declarations);
     FS.writeFileSync(`${cwd}/api/Runtime.ts`, runtime);
 

@@ -1,7 +1,7 @@
 import { TWConfig } from 'bm-thing-transformer';
 import * as FS from 'fs';
 import AdmZip from 'adm-zip';
-import { TSUtilities } from '../Utilities/TSUtilities';
+import { TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 
 const [, , command, ...args] = process.argv;
 
@@ -60,7 +60,7 @@ export async function zip(): Promise<void> {
         if (!FS.existsSync(baseOutPath)) FS.mkdirSync(baseOutPath)
 
         // Zip each project
-        for (const p of TSUtilities.projects()) {
+        for (const p of TWProjectUtilities.projects()) {
             const zipName = `${packageJSON.name}-${p.name}-${packageJSON.version}.zip`;
             const path = `${cwd}/build/${p.name}`;
             await zipPath(zipName, path, baseOutPath);

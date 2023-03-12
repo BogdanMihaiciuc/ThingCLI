@@ -1,7 +1,7 @@
 import { TWThingTransformerFactory, TWConfig } from 'bm-thing-transformer';
 import * as FS from 'fs';
 import * as ts from 'typescript';
-import { TSUtilities } from '../Utilities/TSUtilities';
+import { TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 
 /**
  * Builds the thingworx collection declarations of the thingworx project.
@@ -41,7 +41,7 @@ export function declarations() {
         twConfig.store = {};
     
         // Create the typescript project and emit using a "watch" transformer
-        const program = TSUtilities.programWithPath(path);
+        const program = TWProjectUtilities.programWithPath(path);
         const tsFiles = program.getSourceFiles().filter(file => !file.fileName.endsWith('.d.ts'));
         for (const file of tsFiles) {
             ts.transform(file, [TWThingTransformerFactory(program, path, false, true, twConfig)], program.getCompilerOptions());
@@ -58,17 +58,17 @@ export function declarations() {
         }
 
         // Write the declarations to a .d.ts file
-        TSUtilities.ensurePath(`${path}/static/gen`, path);
+        TWProjectUtilities.ensurePath(`${path}/static/gen`, path);
         FS.writeFileSync(`${path}/static/gen/Generated.d.ts`, declarations);
     }
     
     const cwd = process.cwd();
     
     if (twConfig.projectName == '@auto') {
-        TSUtilities.ensurePath(`${cwd}/src/static/gen`, cwd);
+        TWProjectUtilities.ensurePath(`${cwd}/src/static/gen`, cwd);
         FS.writeFileSync(`${cwd}/src/static/gen/Generated.d.ts`, getMethodHelperDeclarations());
         // If running in multi-project mode, run against each project separately
-        TSUtilities.projects().forEach(p => {
+        TWProjectUtilities.projects().forEach(p => {
             emitDeclarationsOfProject(p.path);
         });
     }

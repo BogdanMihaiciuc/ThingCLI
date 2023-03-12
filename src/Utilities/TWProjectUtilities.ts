@@ -1,10 +1,21 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
 
+export enum TWProjectType {
+    /** 
+     * A typescript project needs to be compiled and transformed into XML entities.
+     */
+    Typescript,
+    /**
+     * A project containing only XML entities.
+     */
+    XML_ONLY,
+} 
+
 /**
  * An interface that describes a project in a multi-project repository.
  */
-export interface TSProject {
+export interface TWProject {
 
     /**
      * The project's name.
@@ -15,37 +26,40 @@ export interface TSProject {
      * The path to the project's root folder.
      */
     path: string;
-}
-
-
-
-/**
- * The interface for a project that contains its dependencies.
- */
- interface TSProjectWithNamedDependencies extends TSProject {
 
     /**
-     * The projects on which this project depends.
+     * The type of project, determined by the presence of the tsconfig.json file
      */
-    parentProjects: (TSProjectWithNamedDependencies | string)[];
+    type: TWProjectType;
 }
 
 /**
  * The interface for a project that contains its dependencies.
  */
-interface TSProjectWithDependencies extends TSProjectWithNamedDependencies {
+ interface TWProjectWithNamedDependencies extends TWProject {
 
     /**
      * The projects on which this project depends.
      */
-    parentProjects: TSProjectWithDependencies[];
+    parentProjects: (TWProjectWithNamedDependencies | string)[];
+}
+
+/**
+ * The interface for a project that contains its dependencies.
+ */
+export interface TWProjectWithDependencies extends TWProjectWithNamedDependencies {
+
+    /**
+     * The projects on which this project depends.
+     */
+    parentProjects: TWProjectWithDependencies[];
 }
 
 /**
  * A class that contains various utility methods making it easier
  * to interact with the typescript compiler API.
  */
-export class TSUtilities {
+export class TWProjectUtilities {
 
     /**
      * Creates and returns a typescript program located at the given path.
@@ -76,18 +90,23 @@ export class TSUtilities {
      * Returns an array of objects, each identifying a project in a multi project repository.
      * @returns     An array of projects.
      */
-    static projects(): TSProject[] {
-        const projects: TSProject[] = [];
+    static projects(): TWProject[] {
+        const projects: TWProject[] = [];
         const cwd = process.cwd();
 
         const srcContents = fs.readdirSync(`${cwd}/src`);
 
-        // Get the contents of the src folder and include each directory that contains
-        // a tsconfig file
+        // Get the contents of the src folder and determine if each folder represents a project
         for (const projectName of srcContents) {
             const path = `${cwd}/src/${projectName}`;
-            if (fs.lstatSync(path).isDirectory() && fs.existsSync(`${path}/tsconfig.json`)) {
-                projects.push({name: projectName, path});
+            if (fs.lstatSync(path).isDirectory()) {
+                if(fs.existsSync(`${path}/tsconfig.json`)) {
+                    // If a tsconfig.json file is found, then the project contains typescript entities
+                    projects.push({name: projectName, path, type: TWProjectType.Typescript});
+                } else if(fs.existsSync(`${path}/twconfig.json`)) {
+                    // If only a twconfig.json is found, then assume it's XML only
+                    projects.push({name: projectName, path, type: TWProjectType.XML_ONLY});
+                }
             }
         }
 
@@ -100,21 +119,26 @@ export class TSUtilities {
      * before the projects they depend on.
      * @returns     An array of projects and their dependencies.
      */
-    static dependencySortedProjects(): TSProjectWithDependencies[] {
+    static dependencySortedProjects(): TWProjectWithDependencies[] {
         // Get the dependencies of each project
-        const projectsWithNamedDependencies: TSProjectWithNamedDependencies[] = this.projects().map(p => {
-            // The dependent projects are specified in tsconfig
-            const tsConfig = require(`${p.path}/tsconfig.json`);
-            const includePaths = tsConfig.include as string[];
+        const projectsWithNamedDependencies: TWProjectWithNamedDependencies[] = this.projects().map(p => {
+            // The list of projects this project depends on
+            const parentProjects: string[] = [];
 
-            // Include paths in the form of "../<ProjectName>"
-            const parentProjects = includePaths.map(p => p.split('/')).filter(components => {
-                if (components.length != 2) return false;
-                if (components[0] != '..') return false;
-                if (components[1].includes('*') || components[1].includes('.')) return false;
+            if(p.type == TWProjectType.Typescript) {
+                // The dependent projects are specified in tsconfig
+                const tsConfig = require(`${p.path}/tsconfig.json`);
+                const includePaths = tsConfig.include as string[];
 
-                return true;
-            }).map(c => c[1]);
+                // Include paths in the form of "../<ProjectName>"
+                parentProjects.push(...includePaths.map(p => p.split('/')).filter(components => {
+                    if (components.length != 2) return false;
+                    if (components[0] != '..') return false;
+                    if (components[1].includes('*') || components[1].includes('.')) return false;
+
+                    return true;
+                }).map(c => c[1]));
+            } 
 
             return {...p, parentProjects};
         });
@@ -132,10 +156,10 @@ export class TSUtilities {
                 return dependentProject;
             });
 
-            p.parentProjects = dependentProjects as TSProjectWithDependencies[];
+            p.parentProjects = dependentProjects as TWProjectWithDependencies[];
         });
 
-        const projectsWithDependencies = projectsWithNamedDependencies as TSProjectWithDependencies[];
+        const projectsWithDependencies = projectsWithNamedDependencies as TWProjectWithDependencies[];
 
         // Sort the projects such that projects that depend on other projects appear before them in the array
         projectsWithDependencies.sort((p1, p2) => {

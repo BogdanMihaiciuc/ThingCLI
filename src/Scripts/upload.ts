@@ -1,7 +1,7 @@
 import * as FS from 'fs';
 import * as Path from 'path';
 import { TWConfig } from 'bm-thing-transformer';
-import { TSUtilities } from '../Utilities/TSUtilities';
+import { TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
 
@@ -54,7 +54,7 @@ export async function upload(): Promise<void> {
 
     if (isSeparate && twConfig.projectName == '@auto') {
         // In separate mode, it is necessary to upload the projects in dependency order
-        for (const project of TSUtilities.dependencySortedProjects().reverse()) {
+        for (const project of TWProjectUtilities.dependencySortedProjects().reverse()) {
             const zipName = `${packageJSON.name}-${project.name}-${packageJSON.version}.zip`;
 
             await uploadZip(`${cwd}/zip/projects/${zipName}`, project.name);

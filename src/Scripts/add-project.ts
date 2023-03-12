@@ -1,7 +1,7 @@
 import Enquirer from "enquirer";
 import * as FS from 'fs';
 import { TWConfig } from 'bm-thing-transformer';
-import { TSUtilities } from "../Utilities/TSUtilities";
+import { TWProjectUtilities } from "../Utilities/TWProjectUtilities";
 
 /**
  * Adds a project to the repository. If the repository is in single-project mode,
@@ -49,7 +49,7 @@ export async function addProject(): Promise<void> {
         FS.rmSync(`${cwd}/src`, {recursive: true, force: true});
 
         // Then copy into the appropriate subfolder in src and clear the temporary folder
-        TSUtilities.ensurePath(`${cwd}/src/${projectName}/src`, cwd);
+        TWProjectUtilities.ensurePath(`${cwd}/src/${projectName}/src`, cwd);
         FS.cpSync(`${cwd}/tmp`, `${cwd}/src/${projectName}/src`, {recursive: true});
         FS.rmSync(`${cwd}/tmp`, {recursive: true, force: true});
 

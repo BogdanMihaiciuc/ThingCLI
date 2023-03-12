@@ -1,5 +1,5 @@
 import { TWConfig } from 'bm-thing-transformer';
-import { TSProject, TSUtilities } from '../Utilities/TSUtilities';
+import { TWProject, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 
 const [, , , ...args] = process.argv;
@@ -23,7 +23,7 @@ export async function remove(): Promise<void> {
 
     if (twConfig.projectName == '@auto' && isSeparate) {
         // Remove the projects in the order of their dependencies
-        for (const project of TSUtilities.dependencySortedProjects()) {
+        for (const project of TWProjectUtilities.dependencySortedProjects()) {
             let projectPackageName = `${packageName}-${project.name}`;
             await uninstallPackage(projectPackageName);
         }
