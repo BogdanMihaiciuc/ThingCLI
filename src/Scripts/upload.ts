@@ -2,7 +2,7 @@ import * as FS from 'fs';
 import * as Path from 'path';
 import readline from 'readline';
 import { TWConfig } from 'bm-thing-transformer';
-import { TWProjectUtilities } from '../Utilities/TWProjectUtilities';
+import { TWProjectType, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
 
@@ -61,7 +61,7 @@ export async function upload(): Promise<void> {
         for (const project of TWProjectUtilities.dependencySortedProjects().reverse()) {
             const zipName = `${packageJSON.name}-${project.name}-${packageJSON.version}.zip`;
             // Import either as an extension or a source control entities
-            if (isEntityImport) {
+            if (project.type == TWProjectType.XML_ONLY && isEntityImport) {
                 await importSourceControlledZip(`${cwd}/zip/projects/`, zipName, project.name);
             } else {
                 await importExtension(`${cwd}/zip/projects/${zipName}`, project.name);
@@ -69,13 +69,9 @@ export async function upload(): Promise<void> {
         };
     }
     else {
-        // In merged mode, just upload the resulting zip
+        // In merged mode, just upload the resulting zip as extension
         const zipName = `${packageJSON.name}-${packageJSON.version}.zip`;
-        if (isEntityImport) {
-            await importSourceControlledZip(`${cwd}/zip/`, zipName, packageJSON.name);
-        } else {
-            await importExtension(`${cwd}/zip/${zipName}`);
-        }
+        await importExtension(`${cwd}/zip/${zipName}`);
     }
 }
 

@@ -234,8 +234,8 @@ export async function build(): Promise<DeploymentEndpoint[]> {
         }
 
 
-        // Emit the metadata.xml file if the user wants to package everything as extensions
-        if (!isEntityImport) {
+        // Emit the metadata.xml for typescript projects and for xml projects with entity import is disabled
+        if (project.type == TWProjectType.Typescript || (!isEntityImport && project.type == TWProjectType.XML_ONLY)) {
             // Copy and update the metadata file
             const metadataFile = FS.readFileSync(`${process.cwd()}/metadata.xml`, 'utf8');
             const metadataXML = await parseStringPromise(metadataFile);
