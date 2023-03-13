@@ -33,9 +33,13 @@ export async function build(): Promise<DeploymentEndpoint[]> {
     const isEntityImport = args.includes("--entityImport") || args.includes("--entity-import") ;
 
     if (twConfig.projectName == '@auto') {
-        // If both modes are specified throw an error
+        // If both modes merged and separate are specified throw an error
         if (isMerged && isSeparate) {
             throw new Error(`🛑 \x1b[1;31mThe --merged and --separate arguments cannot be used together.\x1b[0m`);
+        }
+        // Having merged and entityImport specified makes no sense, since entityImport would end up ignored
+        if (isMerged && isEntityImport) {
+            throw new Error(`🛑 \x1b[1;31mThe --entityImport and --merged arguments cannot be used together.\x1b[0m`);
         }
     }
 
