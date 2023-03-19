@@ -1,6 +1,6 @@
 {
     "name": "bm-thing-cli",
-    "version": "1.6.1",
+    "version": "1.7.0",
     "description": "Command line tools for the Thingworx VSCode Project",
     "bin": {
         "twc": "dist/index.js"
