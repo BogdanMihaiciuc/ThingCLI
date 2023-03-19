@@ -13,7 +13,7 @@ import { install } from './Scripts/install';
 import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
 import { generateAPI } from './Scripts/generate-api';
-import { exportCommand } from './Scripts/export';
+import { pull } from './Scripts/pull';
 import * as fs from 'fs';
 import 'dotenv/config';
 
@@ -93,8 +93,8 @@ async function main() {
         case Commands.generateAPI:
             await generateAPI();
             break;
-        case Commands.export:
-            await exportCommand();
+        case Commands.pull:
+            await pull();
             break;
         default:
             console.error(`Unknown command "${command}" specified.`);

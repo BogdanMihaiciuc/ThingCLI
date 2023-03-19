@@ -35,7 +35,7 @@ export interface TWProject {
     /**
      * The type of project, determined by the presence of the tsconfig.json file
      */
-    type: TWProjectKind;
+    kind: TWProjectKind;
 }
 
 /**
@@ -107,10 +107,10 @@ export class TWProjectUtilities {
             if (fs.lstatSync(path).isDirectory()) {
                 if(fs.existsSync(`${path}/tsconfig.json`)) {
                     // If a tsconfig.json file is found, then the project contains typescript entities
-                    projects.push({name: projectName, path, type: TWProjectKind.TypeScript});
+                    projects.push({name: projectName, path, kind: TWProjectKind.TypeScript});
                 } else if(fs.existsSync(`${path}/twconfig.json`)) {
                     // If only a twconfig.json is found, then assume it's XML only
-                    projects.push({name: projectName, path, type: TWProjectKind.XML});
+                    projects.push({name: projectName, path, kind: TWProjectKind.XML});
                 }
             }
         }
@@ -130,7 +130,7 @@ export class TWProjectUtilities {
             // The list of projects this project depends on
             const parentProjects: string[] = [];
 
-            if(p.type == TWProjectKind.TypeScript) {
+            if (p.kind == TWProjectKind.TypeScript) {
                 // The dependent projects are specified in tsconfig
                 const tsConfig = require(`${p.path}/tsconfig.json`);
                 const includePaths = tsConfig.include as string[];

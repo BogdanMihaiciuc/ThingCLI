@@ -120,16 +120,12 @@ export class TWClient {
             this._authenticationHeaders = { appKey: this._connectionDetails.thingworxAppKey };
         }
         // Otherwise use the username and password combo
-        else if (
-            this._connectionDetails.thingworxUser &&
-            this._connectionDetails.thingworxPassword
-        ) {
+        else if (this._connectionDetails.thingworxUser && this._connectionDetails.thingworxPassword) {
             const basicAuth = Buffer.from(this._connectionDetails.thingworxUser + ':' + this._connectionDetails.thingworxPassword).toString('base64');
             this._authenticationHeaders = { Authorization: 'Basic ' + basicAuth };
-        } else {
-            throw new Error(
-                'Unable to authorize a request to thingworx because an app key or username/password combo was not provided.'
-            );
+        }
+        else {
+            throw new Error('Unable to authorize a request to thingworx because an app key or username/password combo was not provided.');
         }
 
         return this._cachedConnectionDetails;
@@ -167,10 +163,12 @@ export class TWClient {
             // If the body is specified as an object, stringify it
             if (typeof options.body == 'object') {
                 fetchOptions.body = JSON.stringify(options.body);
-            } else {
+            }
+            else {
                 fetchOptions.body = options.body;
             }
-        } else if (options.formData) {
+        }
+        else if (options.formData) {
             fetchOptions.body = options.formData;
         }
 
@@ -185,7 +183,7 @@ export class TWClient {
     }
 
     /**
-     * Deletes the given extension from the thingworx server.
+     * Deletes the specified extension from the thingworx server.
      * @param name      The name of the extension to remove.
      * @returns         A promise that resolves with the server response when the
      *                  operation finishes.
@@ -201,7 +199,7 @@ export class TWClient {
     }
 
     /**
-     * Imports the given extension package to the thingworx server.
+     * Imports the specified extension package to the thingworx server.
      * @param data      A form data object containing the extension to import.
      * @returns         A promise that resolves with the server response when
      *                  the operation finishes.
@@ -214,7 +212,7 @@ export class TWClient {
     }
 
     /**
-     * Sends a POST request to the given endpoint, with an empty body.
+     * Sends a POST request to the specified endpoint, with an empty body.
      * @param endpoint      The endpoint.
      * @returns             A promise that resolves with the server response when
      *                      the operation finishes.
@@ -229,7 +227,7 @@ export class TWClient {
     }
 
     /**
-     * Retrieves the metadata of the given entity.
+     * Retrieves the metadata of the specified entity.
      * @param name          The name of the entity.
      * @param kind          The kind of entity.
      * @returns             A promise that resolves with the server response when
@@ -241,7 +239,7 @@ export class TWClient {
     }
 
     /**
-     * Retrieves a list containing the entities that the given entity depends on.
+     * Retrieves a list containing the entities that the specified entity depends on.
      * @param name          The name of the entity.
      * @param kind          The kind of entity.
      * @returns             A promise that resolves with the server response when
@@ -258,7 +256,7 @@ export class TWClient {
     }
 
     /**
-     * Retrieves a list containing the entities that are part of the given project.
+     * Retrieves a list containing the entities that are part of the specified project.
      * @param name          The name of the project.
      * @returns             A promise that resolves with the server response when
      *                      the operation finishes.
@@ -286,7 +284,7 @@ export class TWClient {
     }
 
     /**
-     * Retrieves the typings file for the given extension package.
+     * Retrieves the typings file for the specified extension package.
      * @param name          The name of the extension package.
      * @returns             A promise that resolves with the server response when
      *                      the operation finishes.
@@ -297,7 +295,7 @@ export class TWClient {
     }
 
     /**
-     * Retrieves the package details of the given extension package.
+     * Retrieves the package details of the specified extension package.
      * @param name          The name of the extension package.
      * @returns             A promise that resolves with the server response when
      *                      the operation finishes.
@@ -313,17 +311,14 @@ export class TWClient {
     }
 
     /**
-     * Executes the source control import of a path on the file repository into ThingWorx
-     * @param project Name of the project being imported
-     * @param fileRepository Name of the ThingWorx FileRepository thing from where the import happens
-     * @param path Path in the `fileRepository` where the entities are
-     * @returns The response from the server
+     * Executes the source control import of a path on the file repository into ThingWorx.
+     * @param project           Name of the project being imported
+     * @param fileRepository    Name of the ThingWorx FileRepository thing from where the import happens
+     * @param path              Path in the `fileRepository` where the entities are
+     * @returns                 A promise that resolves with the server response when
+     *                          the operation finishes.
      */
-    static async sourceControlImport(
-        project: string,
-        fileRepository: string,
-        path: string,
-    ): Promise<TWClientResponse> {
+    static async sourceControlImport(project: string, fileRepository: string, path: string): Promise<TWClientResponse> {
         const url = `Resources/SourceControlFunctions/Services/ImportSourceControlledEntities`;
 
         try {
@@ -345,25 +340,22 @@ export class TWClient {
                 throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
             }
             return response;
-        } catch (err) {
+        }
+        catch (err) {
             throw new Error(`Error executing source control import for project '${project}' because: ${err}`);
         }
     }
 
     /**
-     * Uploads a local file into a ThingWorx file repository
-     * @param filePath Local path to the folder the file is in
-     * @param fileName Name of the file to be uploaded
-     * @param fileRepository Name of the TWX file repository the file should be uploaded to
-     * @param targetPath Remote path in the TWX file repository where the file should be stored
-     * @returns details about the success status
+     * Uploads a local file into a ThingWorx file repository.
+     * @param filePath                  Local path to the folder the file is in.
+     * @param fileName                  Name of the file to be uploaded.
+     * @param fileRepository            Name of the TWX file repository the file should be uploaded to.
+     * @param targetPath                Remote path in the TWX file repository where the file should be stored.
+     * @returns                         A promise that resolves with the server response when
+     *                                  the operation finishes.
      */
-    static async uploadFile(
-        filePath: string,
-        fileName: string,
-        fileRepository: string,
-        targetPath: string,
-    ): Promise<TWClientResponse> {
+    static async uploadFile(filePath: string, fileName: string, fileRepository: string, targetPath: string): Promise<TWClientResponse> {
         try {
             // load the file from the build folder
             let formData = new FormData();
@@ -379,7 +371,8 @@ export class TWClient {
                 throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
             }
             return response;
-        } catch (err) {
+        }
+        catch (err) {
             throw new Error(`Error uploading file '${filePath}' into repository because: ${err}`);
         }
     }
@@ -389,13 +382,10 @@ export class TWClient {
      * @param fileRepository Name of the TWX FileRepository thing
      * @param filePath Remote path to where the zip file is
      * @param targetFolder Remote path to where the file should be extracted
-     * @returns 
+     * @returns A promise that resolves with the server response when
+     *                                  the operation finishes.
      */
-    static async unzipAndExtractRemote(
-        fileRepository: string,
-        filePath: string,
-        targetFolder: string,
-    ) {
+    static async unzipAndExtractRemote(fileRepository: string, filePath: string, targetFolder: string): Promise<TWClientResponse> {
         const url = `Things/${fileRepository}/Services/ExtractZipArchive`;
 
         try {
@@ -413,18 +403,20 @@ export class TWClient {
                 throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
             }
             return response;
-        } catch (err) {
+        }
+        catch (err) {
             throw new Error(`Error executing remote file unzip because: ${err}`);
         }
     }
 
     /**
-     * Deletes a remote folder in a ThingWorx file repository
-     * @param fileRepository Name of the TWX FileRepository thing
-     * @param targetFolder Remote path to the folder to be deleted
-     * @returns details about the success status
+     * Deletes the specified remote folder in a ThingWorx file repository.
+     * @param fileRepository    Name of the FileRepository from which the folder should be deleted.
+     * @param targetFolder      Remote path to the folder to be deleted.
+     * @returns                 A promise that resolves with the server response when
+     *                          the operation finishes.
      */
-    static async deleteRemoteDirectory(fileRepository: string, targetFolder: string) {
+    static async deleteRemoteDirectory(fileRepository: string, targetFolder: string): Promise<TWClientResponse> {
         const url = `Things/${fileRepository}/Services/DeleteFolder`;
         try {
             const response = await this._performRequest({
@@ -440,25 +432,22 @@ export class TWClient {
                 throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
             }
             return response;
-        } catch (err) {
+        }
+        catch (err) {
             throw new Error(`Error executing remote folder delete because: ${err}`);
         }
     }
 
     /**
-     * Execute a source control export of a project
-     * @param project ThingWorx project name
-     * @param fileRepository Name of the FileRepository to store the export
-     * @param path Remote path to where the files should be exported to
-     * @param name Name of the folder where the files are stored
-     * @returns An URL to where the zip containing the exports is found
+     * Execute a source control export of the specified project.
+     * @param project           The name of the Thingworx project to export.
+     * @param fileRepository    Name of the FileRepository where the export will be saved.
+     * @param path              Remote path where the files should be exported to.
+     * @param name              Name of the folder where the files should be stored.
+     * @returns                 A promise that resolves with the URL where the zip containing the exports is found
+     *                          when the operation completes.
      */
-    static async sourceControlExport(
-        project: string,
-        fileRepository: string,
-        path: string,
-        name: string,
-    ): Promise<string> {
+    static async sourceControlExport(project: string, fileRepository: string, path: string, name: string): Promise<string> {
         const { thingworxServer: host } = this._connectionDetails;
 
         try {
@@ -477,9 +466,11 @@ export class TWClient {
                     includeDependents: false,
                 },
             });
+
             if (exportResponse.statusCode != 200) {
                 throw new Error(`Got status code ${exportResponse.statusCode} (${exportResponse.statusMessage}). Body: ${exportResponse.body}`);
             }
+
             // Create a zip from the folder that was exported
             await this._performRequest({
                 url: `Things/${fileRepository}/Services/CreateZipArchive`,
@@ -492,18 +483,21 @@ export class TWClient {
                     files: path + "/" + project + "/",
                 },
             });
+
             return `${host}/Thingworx/FileRepositories/${fileRepository}/${path}/${project}.zip`;
-        } catch (err) {
+        }
+        catch (err) {
             throw new Error(`Error executing source control export for project '${project}' because: ${err}`);
         }
     }
 
     /**
-     * Downloads a remote file into the given target path
-     * @param fileUrl Path to the file to download
-     * @param targetPath Local path to where the file should be saved
+     * Downloads a remote file into the specified path.
+     * @param fileUrl           Path to the file to download.
+     * @param targetPath        Local path to where the file should be saved.
+     * @returns                 A promise that resolves when the file has been written to the specified path.
      */
-    static async downloadFile(fileUrl: string, targetPath: string) {
+    static async downloadFile(fileUrl: string, targetPath: string): Promise<void> {
         const response = await fetch(fileUrl, { headers: this._authenticationHeaders });
         fs.writeFileSync(targetPath, Buffer.from(await (await response.blob()).arrayBuffer()));
     }

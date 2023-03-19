@@ -69,7 +69,7 @@ export function declarations() {
         FS.writeFileSync(`${cwd}/src/static/gen/Generated.d.ts`, getMethodHelperDeclarations());
         // If running in multi-project mode, run against each project separately
         TWProjectUtilities.projects()
-            .filter(p => p.type == TWProjectKind.TypeScript)
+            .filter(p => p.kind == TWProjectKind.TypeScript)
             .forEach(p => { emitDeclarationsOfProject(p.path); });
     }
     else {

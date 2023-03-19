@@ -101,7 +101,7 @@ export async function build(): Promise<DeploymentEndpoint[]> {
     else {
         // If running in single project mode, run against the whole repository, and assume it's typescript
         const outPath = `${cwd}/build`;
-        buildProject({ name: twConfig.projectName, path: cwd, type: TWProjectKind.TypeScript, parentProjects: [] }, outPath);
+        buildProject({ name: twConfig.projectName, path: cwd, kind: TWProjectKind.TypeScript, parentProjects: [] }, outPath);
     }
 
     /**
@@ -131,7 +131,7 @@ export async function build(): Promise<DeploymentEndpoint[]> {
         let formattedDiagnostics = '';
         const diagnosticMessages: DiagnosticMessage[] = []
     
-        if (project.type == TWProjectKind.TypeScript) {
+        if (project.kind == TWProjectKind.TypeScript) {
             // Create the typescript project and emit using both transformers
             const program = TWProjectUtilities.programWithPath(project.path, true);
 
@@ -260,7 +260,7 @@ export async function build(): Promise<DeploymentEndpoint[]> {
 
 
         // Emit the metadata.xml for typescript projects and for xml projects with entity import is disabled
-        if (project.type == TWProjectKind.TypeScript || (!isEntityImport && project.type == TWProjectKind.XML)) {
+        if (project.kind == TWProjectKind.TypeScript || (!isEntityImport && project.kind == TWProjectKind.XML)) {
             // Copy and update the metadata file
             const metadataFile = FS.readFileSync(`${process.cwd()}/metadata.xml`, 'utf8');
             const metadataXML = await parseStringPromise(metadataFile);

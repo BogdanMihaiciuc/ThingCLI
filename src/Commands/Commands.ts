@@ -62,7 +62,15 @@ export const enum Commands {
     upgrade = 'upgrade',
 
     /**
-     * The export command exports project entities from the server as XML files
+     * The pull command pulls project entities from the specified projects from the server as XML files.
+     * If no projects are specified, the command pulls entities from all local XML projects.
      */
-    export = 'export',
+    pull = 'pull',
+
+    /**
+     * The push command uploads project entities to the server based on the project kind:
+     *  * Typescript projects are built and uploaded as extensions
+     *  * XML projects are uploaded as regular, editable entities
+     */
+    push = 'push',
 }

@@ -61,7 +61,7 @@ export async function upload(): Promise<void> {
         for (const project of TWProjectUtilities.dependencySortedProjects().reverse()) {
             const zipName = `${packageJSON.name}-${project.name}-${packageJSON.version}.zip`;
             // Import either as an extension or a source control entities
-            if (project.type == TWProjectKind.XML && isEntityImport) {
+            if (project.kind == TWProjectKind.XML && isEntityImport) {
                 await importSourceControlledZip(`${cwd}/zip/projects/`, zipName, project.name);
             } else {
                 await importExtension(`${cwd}/zip/projects/${zipName}`, project.name);
