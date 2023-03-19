@@ -1,15 +1,20 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
 
-export enum TWProjectType {
+/**
+ * An enum that contains constants describing what kind of sources a project uses.
+ */
+export enum TWProjectKind {
+
     /** 
-     * A typescript project needs to be compiled and transformed into XML entities.
+     * Indicates that the project is a typescript project that needs to be compiled and transformed into XML entities.
      */
-    Typescript,
+    TypeScript,
+
     /**
-     * A project containing only XML entities.
+     * Indicates that the proejct is an XML projects whose files can be directly imported into Thingworx.
      */
-    XML_ONLY,
+    XML,
 } 
 
 /**
@@ -30,7 +35,7 @@ export interface TWProject {
     /**
      * The type of project, determined by the presence of the tsconfig.json file
      */
-    type: TWProjectType;
+    type: TWProjectKind;
 }
 
 /**
@@ -102,10 +107,10 @@ export class TWProjectUtilities {
             if (fs.lstatSync(path).isDirectory()) {
                 if(fs.existsSync(`${path}/tsconfig.json`)) {
                     // If a tsconfig.json file is found, then the project contains typescript entities
-                    projects.push({name: projectName, path, type: TWProjectType.Typescript});
+                    projects.push({name: projectName, path, type: TWProjectKind.TypeScript});
                 } else if(fs.existsSync(`${path}/twconfig.json`)) {
                     // If only a twconfig.json is found, then assume it's XML only
-                    projects.push({name: projectName, path, type: TWProjectType.XML_ONLY});
+                    projects.push({name: projectName, path, type: TWProjectKind.XML});
                 }
             }
         }
@@ -125,7 +130,7 @@ export class TWProjectUtilities {
             // The list of projects this project depends on
             const parentProjects: string[] = [];
 
-            if(p.type == TWProjectType.Typescript) {
+            if(p.type == TWProjectKind.TypeScript) {
                 // The dependent projects are specified in tsconfig
                 const tsConfig = require(`${p.path}/tsconfig.json`);
                 const includePaths = tsConfig.include as string[];

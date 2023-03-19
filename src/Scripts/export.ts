@@ -1,7 +1,7 @@
 import * as FS from 'fs';
 import * as Path from 'path';
 import { TWConfig } from 'bm-thing-transformer';
-import { TWProjectType, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
+import { TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
 
@@ -15,7 +15,7 @@ export async function exportCommand(): Promise<void> {
     if (twConfig.projectName == '@auto') {
         // In multi-project mode, export each xml-only project
         for (const project of TWProjectUtilities.projects()) {
-            if (project.type == TWProjectType.XML_ONLY) {
+            if (project.type == TWProjectKind.XML) {
                 exportProjectToFolder(Path.join(project.path, 'src'), project.name);
             }
         };

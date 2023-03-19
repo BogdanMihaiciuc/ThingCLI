@@ -1,7 +1,7 @@
 import { TWThingTransformerFactory, TWConfig } from 'bm-thing-transformer';
 import * as FS from 'fs';
 import * as ts from 'typescript';
-import { TWProjectType, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
+import { TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 
 /**
  * Builds the thingworx collection declarations of the thingworx project.
@@ -69,7 +69,7 @@ export function declarations() {
         FS.writeFileSync(`${cwd}/src/static/gen/Generated.d.ts`, getMethodHelperDeclarations());
         // If running in multi-project mode, run against each project separately
         TWProjectUtilities.projects()
-            .filter(p => p.type == TWProjectType.Typescript)
+            .filter(p => p.type == TWProjectKind.TypeScript)
             .forEach(p => { emitDeclarationsOfProject(p.path); });
     }
     else {
