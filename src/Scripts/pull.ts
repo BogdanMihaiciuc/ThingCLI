@@ -30,12 +30,12 @@ export async function pull(): Promise<void> {
             }
 
             if (project.kind == TWProjectKind.XML) {
-                exportProjectToFolder(Path.join(project.path, 'src'), project.name);
+                pullProjectToFolder(Path.join(project.path, 'src'), project.name);
             }
         };
     }
     else {
-        throw new Error('Exports are only supported in multi-project mode')
+        throw new Error('Pull is only supported in multi-project mode.')
     }
 }
 
@@ -44,15 +44,15 @@ export async function pull(): Promise<void> {
  * @param path Path to where the exported XMLs are emitted
  * @param projectName Name of the ThingWorx project to export
  */
-async function exportProjectToFolder(path: string, projectName: string) {
+async function pullProjectToFolder(path: string, projectName: string) {
     process.stdout.write(`\x1b[2m❯\x1b[0m Exporting ${projectName} from ${TWClient.server} to path ${path}`);
 
     // Details for where the entities are imported into thingworx
-    const REPOSITORY_NAME = process.env.THINGWORX_REPO ?? 'SystemRepository';
-    const REPOSITORY_PATH = process.env.THINGWORX_REPO_PATH ?? '/';
+    const repositoryName = process.env.THINGWORX_REPO ?? 'SystemRepository';
+    const repositoryPath = process.env.THINGWORX_REPO_PATH ?? '/';
 
     // step 1: ask twx to do a source control export, and get the link to the zip file
-    const fileUrl = await TWClient.sourceControlExport(projectName, REPOSITORY_NAME, REPOSITORY_PATH, projectName);
+    const fileUrl = await TWClient.sourceControlExport(projectName, repositoryName, repositoryPath, projectName);
     // step 2: download the file from thingworx
     if (!FS.existsSync("temp")) {
         FS.mkdirSync("temp");
@@ -66,7 +66,7 @@ async function exportProjectToFolder(path: string, projectName: string) {
     FS.cpSync(`temp/${projectName}`, path, { recursive: true, });
     // step 4: cleanup
     FS.rmSync("temp", { recursive: true, force: true })
-    await TWClient.deleteRemoteDirectory(REPOSITORY_NAME, `${REPOSITORY_PATH}/${projectName}`);
+    await TWClient.deleteRemoteDirectory(repositoryName, `${repositoryPath}/${projectName}`);
 
     process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Exported ${projectName} from ${TWClient.server} to path ${path} \n`);
 }
