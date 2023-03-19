@@ -11,6 +11,34 @@ import readline from 'readline';
 const [path, bin, command, ...args] = process.argv;
 
 /**
+ * Prints the specified diagnostic message to the console.
+ * @param message   The message to print.
+ */
+function PrintDiagnosticMessage(message: DiagnosticMessage): void {
+    let messageText: string;
+    switch (message.kind) {
+        case DiagnosticMessageKind.Error:
+            messageText = (`🛑 \x1b[1;31mError\x1b[0m ${message.message}`);
+            break;
+        case DiagnosticMessageKind.Warning:
+            messageText = (`🔶 \x1b[1;33mWarning\x1b[0m ${message.message}`);
+            break;
+        default:
+            return;
+    }
+
+    // If a line and column position is specified, print out the relevant line
+    if (message.line && message.file) {
+        const text = FS.readFileSync(message.file, {encoding: 'utf-8'}).split('\n');
+        const column = message.column || 0;
+        const spaceBeforeCaret = message.line.toFixed().length + 2 + column;
+        messageText = `\n\x1b[36m${message.file}\x1b[0m:\x1b[33m${message.line + 1}\x1b[0m:\x1b[33m${column + 1}\x1b[0m\n${messageText}\n\x1b[90m${message.line + 1}\x1b[0m ${text[message.line]}\n${new Array(spaceBeforeCaret).join(' ')}\x1b[31m^\x1b[0m\n`
+    }
+
+    console.log(messageText);
+}
+
+/**
  * Builds the thingworx entity xml files from the typescript project.
  * @returns             A promise that resolves with an array of deployment
  *                      endpoints when the operation completes.
@@ -166,21 +194,14 @@ export async function build(): Promise<DeploymentEndpoint[]> {
             transformer.firePostTransformActions();
         }
 
-        const diagnosticMessages = twConfig.store['@diagnosticMessages'] as unknown as DiagnosticMessage[];
+        const diagnosticMessages = twConfig.store['@diagnosticMessages'] as unknown as DiagnosticMessage[] || [];
 
         // If any errors were reported, display them and fail
         if (diagnosticMessages.some(m => m.kind == DiagnosticMessageKind.Error)) {
             process.stdout.write(`\r\x1b[1;31m✖\x1b[0m Failed building ${projectName || 'project'}\n`);
 
             for (const message of diagnosticMessages) {
-                switch (message.kind) {
-                    case DiagnosticMessageKind.Error:
-                        console.log(`🛑 \x1b[1;31mError\x1b[0m ${message.message}`);
-                        break;
-                    case DiagnosticMessageKind.Warning:
-                        console.log(`🔶 \x1b[1;33mWarning\x1b[0m ${message.message}`);
-                        break;
-                }
+                PrintDiagnosticMessage(message);
             }
 
             throw new Error('Validation failed.');
@@ -256,7 +277,7 @@ export async function build(): Promise<DeploymentEndpoint[]> {
         const timeEnd = process.hrtime();
         const duration = (timeEnd[0] + timeEnd[1] / 1_000_000_000 - timeStart[0] - timeStart[1] / 1_000_000_000)
 
-        process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Built ${projectName || 'project'} in \x1b[1;32m${duration.toFixed(1)}s\x1b[0m${formattedDiagnostics.length ? ` (with warnings):` : '     '}\n`);
+        process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Built ${projectName || 'project'} in \x1b[1;32m${duration.toFixed(1)}s\x1b[0m${formattedDiagnostics.length || diagnosticMessages.length ? ` (with warnings):` : '     '}\n`);
 
         // Write out the diagnostic messages at the end of the task
         if (formattedDiagnostics) {
@@ -265,7 +286,7 @@ export async function build(): Promise<DeploymentEndpoint[]> {
 
         // If any validation errors were reported, display them at the end of the task
         for (const message of diagnosticMessages) {
-            console.log(`🔶 \x1b[1;33mWarning\x1b[0m ${message.message}`);
+            PrintDiagnosticMessage(message);
         }
 
         // If entity copying is enabled, look for XML files in the project path and copy them to the build directory

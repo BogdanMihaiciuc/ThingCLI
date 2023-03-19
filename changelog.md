@@ -1,3 +1,7 @@
+# 1.7
+
+When printing out diagnostic messages, if the message indicates a relevant line it will be printed out before the message.
+
 # 1.6.1
 
 Updates to transformer version 1.6.1, which includes the type definitions for `SQLThing`.
