@@ -40,10 +40,13 @@ function PrintDiagnosticMessage(message: DiagnosticMessage): void {
 
 /**
  * Builds the thingworx entity xml files from the typescript project.
+ * @param push          Defaults to `false`. When set to `true`, XML projects will not be built as extensions
+ *                      and the `--merged` argument will be disabled. When set to `false` all projects
+ *                      are built as extensions.
  * @returns             A promise that resolves with an array of deployment
  *                      endpoints when the operation completes.
  */
-export async function build(): Promise<DeploymentEndpoint[]> {
+export async function build(push: boolean = false): Promise<DeploymentEndpoint[]> {
     const cwd = process.cwd();
 
     // The array of deployment endpoints discovered while building
@@ -57,8 +60,9 @@ export async function build(): Promise<DeploymentEndpoint[]> {
     const isMerged = args.includes('--merged');
     const isSeparate = args.includes('--separate') || !isMerged;
 
+    const projects = TWProjectUtilities.projectsWithArguments(args);
+
     // If the entity import flag is set, don't create the metadata.xml files and use source control imports
-    const isEntityImport = args.includes("--entityImport") || args.includes("--entity-import") ;
 
     if (twConfig.projectName == '@auto') {
         // If both modes merged and separate are specified throw an error
@@ -66,8 +70,8 @@ export async function build(): Promise<DeploymentEndpoint[]> {
             throw new Error(`🛑 \x1b[1;31mThe --merged and --separate arguments cannot be used together.\x1b[0m`);
         }
         // Having merged and entityImport specified makes no sense, since entityImport would end up ignored
-        if (isMerged && isEntityImport) {
-            throw new Error(`🛑 \x1b[1;31mThe --entityImport and --merged arguments cannot be used together.\x1b[0m`);
+        if (isMerged && push) {
+            throw new Error(`🛑 \x1b[1;31mUnknown argument "--merged" specified.\x1b[0m`);
         }
     }
 
@@ -92,6 +96,11 @@ export async function build(): Promise<DeploymentEndpoint[]> {
         if (!FS.existsSync(baseOutPath)) FS.mkdirSync(baseOutPath)
 
         for (const p of TWProjectUtilities.dependencySortedProjects()) {
+            // If an array of projects was specified, only build the specified projects
+            if (projects && !projects.includes(p.name)) {
+                continue;
+            }
+
             // For merged builds, everything ends up in the same extension while for
             // separate builds, each project is its own extension
             const outPath = isMerged ? baseOutPath : `${baseOutPath}/${p.name}`;
@@ -260,7 +269,7 @@ export async function build(): Promise<DeploymentEndpoint[]> {
 
 
         // Emit the metadata.xml for typescript projects and for xml projects with entity import is disabled
-        if (project.kind == TWProjectKind.TypeScript || (!isEntityImport && project.kind == TWProjectKind.XML)) {
+        if (project.kind == TWProjectKind.TypeScript || (!push && project.kind == TWProjectKind.XML)) {
             // Copy and update the metadata file
             const metadataFile = FS.readFileSync(`${process.cwd()}/metadata.xml`, 'utf8');
             const metadataXML = await parseStringPromise(metadataFile);

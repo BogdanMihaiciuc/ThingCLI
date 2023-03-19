@@ -1,7 +1,7 @@
 import * as FS from 'fs';
 import * as Path from 'path';
 import readline from 'readline';
-import { TWConfig } from 'bm-thing-transformer';
+import { TWConfig, TWPropertyDataChangeKind } from 'bm-thing-transformer';
 import { TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
@@ -10,8 +10,10 @@ const [, , , ...args] = process.argv;
 
 /**
  * Uploads the archive from the build folder to thingworx.
+ * @param push          Defaults to `false`. When set to `true`, XML projects will be uploaded as regular
+ *                      editable entities. When set to `false` all projects are uploaded as extensions.
  */
-export async function upload(): Promise<void> {
+export async function upload(push: boolean = false): Promise<void> {
     const cwd = process.cwd();
 
     // Load the twconfig file which contains compilation options.
@@ -21,12 +23,11 @@ export async function upload(): Promise<void> {
     // in the appropriate order
     const isMerged = args.includes('--merged');
     const isSeparate = args.includes('--separate') || !isMerged;
-    // When the entity import flag is specified, don't import zip files as extensions, but rather as 
-    // source control entity imports
-    const isEntityImport = args.includes("--entityImport") || args.includes("--entity-import");
 
     // Load the twconfig file which contains the version and package name information.
     const packageJSON = require(`${process.cwd()}/package.json`);
+
+    const projects = TWProjectUtilities.projectsWithArguments(args);
 
     // If extensions are specified, create a zip with them and upload them
     if (args.includes('--extensions')) {
@@ -45,7 +46,7 @@ export async function upload(): Promise<void> {
 
         // Deploy the extensions
         try {
-            await importExtension(Path.join(cwd, 'zip', 'extensions.zip'), 'Extensions');
+            await uploadExtension(Path.join(cwd, 'zip', 'extensions.zip'), 'Extensions');
         }
         catch (e) {
             // The extensions failing is non-critical, so a project upload is attempted
@@ -59,63 +60,72 @@ export async function upload(): Promise<void> {
     if (isSeparate && twConfig.projectName == '@auto') {
         // In separate mode, it is necessary to upload the projects in dependency order
         for (const project of TWProjectUtilities.dependencySortedProjects().reverse()) {
+            // If an array of projects was specified, only upload the specified projects
+            if (projects && !projects.includes(project.name)) {
+                continue;
+            }
+
             const zipName = `${packageJSON.name}-${project.name}-${packageJSON.version}.zip`;
             // Import either as an extension or a source control entities
-            if (project.kind == TWProjectKind.XML && isEntityImport) {
-                await importSourceControlledZip(`${cwd}/zip/projects/`, zipName, project.name);
-            } else {
-                await importExtension(`${cwd}/zip/projects/${zipName}`, project.name);
+            if (project.kind == TWProjectKind.XML && push) {
+                await uploadSourceControlledZip(`${cwd}/zip/projects/`, zipName, project.name);
+            }
+            else {
+                await uploadExtension(`${cwd}/zip/projects/${zipName}`, project.name);
             }
         };
     }
     else {
         // In merged mode, just upload the resulting zip as extension
         const zipName = `${packageJSON.name}-${packageJSON.version}.zip`;
-        await importExtension(`${cwd}/zip/${zipName}`);
+        await uploadExtension(`${cwd}/zip/${zipName}`);
     }
 }
 
 /**
- * Import the given zip file containing entities into ThingWorx using source control imports
- * @param path Path to the folder containing the zip file
- * @param zipName Name of the zip file
- * @param projectName Name of the project being uploaded
+ * Import the specified zip file containing entities into ThingWorx using source control imports.
+ * @param path          Path to the folder containing the zip file.
+ * @param zipName       Name of the zip file to be uploaded.
+ * @param projectName   Name of the project to which the entities in the specified archive belong.
+ * @returns             A promise that resolves when the operation completes.
  */
-async function importSourceControlledZip(path: string, zipName: string, projectName: string) {
-    process.stdout.write(`\x1b[2m❯\x1b[0m Uploading ${projectName} to ${TWClient.server} as entities`);
+async function uploadSourceControlledZip(path: string, zipName: string, projectName: string): Promise<void> {
+    process.stdout.write(`\x1b[2m❯\x1b[0m Pushing entities in ${projectName} to ${TWClient.server}`);
 
     // Details for where the entities are imported into thingworx
-    const REPOSITORY_NAME = process.env.THINGWORX_REPO ?? 'SystemRepository';
-    const REPOSITORY_PATH = process.env.THINGWORX_REPO_PATH ?? '/';
+    const repositoryName = process.env.THINGWORX_REPO;
+    const repositoryPath = process.env.THINGWORX_REPO_PATH;
+
+    if (!repositoryName || !repositoryPath) {
+        throw new Error(`Unable to push entities because the file repository has not been properly configured in your environment.`);
+    }
 
     // step 1: upload the file to Thingworx
-    await TWClient.uploadFile(path, zipName, REPOSITORY_NAME, REPOSITORY_PATH);
+    await TWClient.uploadFile(path, zipName, repositoryName, repositoryPath);
     // step 2: extract the uploaded file into a folder on the twx repository
-    await TWClient.unzipAndExtractRemote(REPOSITORY_NAME, `${REPOSITORY_PATH}/${zipName}`, `${REPOSITORY_PATH}/${projectName}`);
+    await TWClient.unzipAndExtractRemote(repositoryName, `${repositoryPath}/${zipName}`, `${repositoryPath}/${projectName}`);
     // step 3: ask ThingWorx to import the entities in the folder using source control import
-    await TWClient.sourceControlImport(projectName, REPOSITORY_NAME, `${REPOSITORY_PATH}/${projectName}`,);
+    await TWClient.sourceControlImport(repositoryName, `${repositoryPath}/${projectName}`, projectName);
     // step 4: cleanup
-    await TWClient.deleteRemoteDirectory(REPOSITORY_NAME, `${REPOSITORY_PATH}/${projectName}`);
+    await TWClient.deleteRemoteDirectory(repositoryName, `${repositoryPath}/${projectName}`);
     
     readline.clearLine(process.stdout, -1);
-    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Uploaded ${projectName} to ${TWClient.server} as entities \n`);
+
+    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Pushed entities in ${projectName} to ${TWClient.server} \n`);
 }
 
 /**
- * Uploads an extension zip at the given path to the thingworx server.
+ * Uploads an extension zip at the specified path to the thingworx server.
  * @param path      The path to the zip file to upload.
  * @param name      If specified, the name of the project that should appear in the console.
+ * @returns         A promise that resolves when the operation completes.
  */
-async function importExtension(path: string, name?: string): Promise<void> {
+async function uploadExtension(path: string, name?: string): Promise<void> {
     process.stdout.write(`\x1b[2m❯\x1b[0m Uploading${name ? ` ${name}` : ''} to ${TWClient.server}`);
 
     const formData = new FormData();
 
-    formData.append(
-        "file",
-        new Blob([FS.readFileSync(path)]),
-        path.toString().split("/").pop()
-    );
+    formData.append("file", new Blob([FS.readFileSync(path)]), path.toString().split("/").pop());
 
     const response = await TWClient.importExtension(formData);
 
@@ -132,11 +142,11 @@ ${formattedUploadStatus(response.body)}`);
 
 /**
  * Returns a formatted string that contains the validation and installation status extracted
- * from the given server response.
- * @param {string} response         The server response.
- * @returns {string}                The formatted upload status.
+ * from the specified server response.
+ * @param response         The server response.
+ * @returns                The formatted upload status.
  */
-function formattedUploadStatus(response) {
+function formattedUploadStatus(response): string {
     let infotable;
     let result = '';
     try {

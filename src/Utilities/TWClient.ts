@@ -312,13 +312,14 @@ export class TWClient {
 
     /**
      * Executes the source control import of a path on the file repository into ThingWorx.
-     * @param project           Name of the project being imported
      * @param fileRepository    Name of the ThingWorx FileRepository thing from where the import happens
-     * @param path              Path in the `fileRepository` where the entities are
+     * @param path              Path in the `fileRepository` where the entities are.
+     * @param projectName       Defaults to `'project'`. The name of the project being imported. 
+     *                          This is only used for error reporting if the import fails.
      * @returns                 A promise that resolves with the server response when
      *                          the operation finishes.
      */
-    static async sourceControlImport(project: string, fileRepository: string, path: string): Promise<TWClientResponse> {
+    static async sourceControlImport(fileRepository: string, path: string, projectName?: string): Promise<TWClientResponse> {
         const url = `Resources/SourceControlFunctions/Services/ImportSourceControlledEntities`;
 
         try {
@@ -342,7 +343,7 @@ export class TWClient {
             return response;
         }
         catch (err) {
-            throw new Error(`Error executing source control import for project '${project}' because: ${err}`);
+            throw new Error(`Error executing source control import for project '${projectName || 'project'}' because: ${err}`);
         }
     }
 

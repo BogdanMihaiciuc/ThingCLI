@@ -51,22 +51,25 @@ async function main() {
             await build();
             await zip();
             break;
-        // The following 2 commands run a very similar sequence of steps
+        // The following 3 commands run a very similar sequence of steps
         case Commands.upload:
         case Commands.deploy:
+        case Commands.push:
+            const isPushCommand = command == Commands.push;
+
             // If the argument is present, don't increment the version 
             if (!args.includes('--retainVersion') && !args.includes('--retain-version')) {
                 await incrementVersion();
             }
             await declarations();
-            const endpoints = await build();
+            const endpoints = await build(isPushCommand);
             await zip();
 
             // If the remove argument is specified, first remove the existing version
             if (args.includes('--remove')) {
                 await remove();
             }
-            await upload();
+            await upload(isPushCommand);
             if (command == Commands.deploy) {
                 await deploy(endpoints);
             }
@@ -117,14 +120,17 @@ Available commands:
  * \x1b[1mwatch\x1b[0m
    Watches the source folder and runs declarations on any change
 
- * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug] [--trace]
+ * \x1b[1mbuild\x1b[0m [--merged] [--separate] [--debug] [--trace] [--projects]
    Builds the thingworx extension
 
- * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--entity-import]
+ * \x1b[1mupload\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--projects]
    Builds and uploads the thingworx extension
 
- * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--entity-import]
+ * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--projects]
    Uploads the extension then runs deployment scripts
+
+ * \x1b[1mpush\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--projects]
+   Builds and uploads the thingworx extension for typescript projects and uploads xml projects as editable entities
 
  * \x1b[1mremove\x1b[0m [--merged] [--separate]
    Removes the thingworx extension
@@ -132,8 +138,8 @@ Available commands:
  * \x1b[1madd-project\x1b[0m
    Adds a new project to the repository
 
- * \x1b[1mexport\x1b[0m
-   Exports xml only projects from the thingworx server 
+ * \x1b[1mpull\x1b[0m [--projects]
+   Pulls xml projects from the thingworx server 
 
  * \x1b[1mgenerate-api\x1b[0m
    EXPERIMENTAL: Builds declarations out of exported entities that can be used in other projects

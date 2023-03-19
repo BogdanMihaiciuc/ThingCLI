@@ -67,7 +67,7 @@ export interface TWProjectWithDependencies extends TWProjectWithNamedDependencie
 export class TWProjectUtilities {
 
     /**
-     * Creates and returns a typescript program located at the given path.
+     * Creates and returns a typescript program located at the specified path.
      * @param path      The typescript's project path.
      * @param strict    When set to `true`, the `noEmitOnError` flag will be enabled.
      * @returns         A typescript program.
@@ -185,7 +185,7 @@ export class TWProjectUtilities {
     }
 
     /**
-     * Ensures that the given folder structure exists, creating it if it doesn't.
+     * Ensures that the specified folder structure exists, creating it if it doesn't.
      * @param path              The folder structure to create.
      * @param basePath          The base path. The target path must begin with this path.
      *                          This path's enclosing folder is expected to exist.
@@ -207,6 +207,26 @@ export class TWProjectUtilities {
         while (component = remainingComponents.shift()) {
             currentPath = `${currentPath}/${component}`;
             if (!fs.existsSync(currentPath)) fs.mkdirSync(currentPath);
+        }
+    }
+
+    /**
+     * Extracts the value of the projects argument from the specified command line arguments.
+     * @param args      The command line arguments.
+     * @returns         An array that contains the specified projects, if the `--projects` argument was specified,
+     *                  `undefined` otherwise.
+     */
+    static projectsWithArguments(args: string[]): string[] | undefined {
+        for (const arg of args) {
+            if (arg.startsWith('--projects=')) {
+                const projects = arg.substring('--projects='.length);
+
+                if (!projects) {
+                    throw new Error(`No projects have been specified.`);
+                }
+
+                return projects.split(',').map(p => p.trim()).filter(p => p);
+            }
         }
     }
 }

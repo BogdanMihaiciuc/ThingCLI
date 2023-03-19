@@ -19,9 +19,16 @@ export async function pull(): Promise<void> {
         throw new Error('Unable to pull entities because a format has not been specified.');
     }
 
+    const projects = TWProjectUtilities.projectsWithArguments(args);
+
     if (twConfig.projectName == '@auto') {
         // In multi-project mode, export each xml-only project
         for (const project of TWProjectUtilities.projects()) {
+            // If an array of projects was specified, only build the specified projects
+            if (projects && !projects.includes(project.name)) {
+                continue;
+            }
+
             if (project.kind == TWProjectKind.XML) {
                 exportProjectToFolder(Path.join(project.path, 'src'), project.name);
             }
