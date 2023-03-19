@@ -1,8 +1,6 @@
-import type { TWPackageJSON, TWPackageJSONConnectionDetails } from "../Packages/TWPackageJSON";
-import type * as fs from 'fs';
-import * as http from 'http';
-import * as https from 'https';
-import * as crypto from 'crypto';
+import type { TWPackageJSON, TWPackageJSONConnectionDetails } from '../Packages/TWPackageJSON';
+import * as fs from 'fs';
+import * as Path from 'path';
 
 /**
  * The options that may be passed to a thingworx request.
@@ -10,7 +8,7 @@ import * as crypto from 'crypto';
 interface TWClientRequestOptions {
 
     /**
-     * The endpoint to invoke/
+     * The endpoint to invoke
      */
     url: string;
 
@@ -28,7 +26,7 @@ interface TWClientRequestOptions {
     /**
      * An optional multipart body to send.
      */
-    formData?: Record<string, fs.ReadStream>;
+    formData?: FormData;
 }
 
 /**
@@ -45,7 +43,7 @@ interface TWClientResponse {
     /**
      * The response headers.
      */
-    headers: http.IncomingHttpHeaders;
+    headers: Headers;
 
     /**
      * The status code.
@@ -83,6 +81,12 @@ export class TWClient {
     private static _cachedConnectionDetails?: TWPackageJSONConnectionDetails;
 
     /**
+     * The cached header to use for Authentication. 
+     * Automatically set when the _cachedConnectionDetails are accessed
+     */
+    private static _authenticationHeaders?: Record<string, string>;
+
+    /**
      * The connection details to be used.
      */
     private static get _connectionDetails(): TWPackageJSONConnectionDetails {
@@ -111,6 +115,23 @@ export class TWClient {
             };
         }
 
+        // Try to authorize using an app key if provided, which is the preferred method
+        if (this._connectionDetails.thingworxAppKey) {
+            this._authenticationHeaders = { appKey: this._connectionDetails.thingworxAppKey };
+        }
+        // Otherwise use the username and password combo
+        else if (
+            this._connectionDetails.thingworxUser &&
+            this._connectionDetails.thingworxPassword
+        ) {
+            const basicAuth = Buffer.from(this._connectionDetails.thingworxUser + ':' + this._connectionDetails.thingworxPassword).toString('base64');
+            this._authenticationHeaders = { Authorization: 'Basic ' + basicAuth };
+        } else {
+            throw new Error(
+                'Unable to authorize a request to thingworx because an app key or username/password combo was not provided.'
+            );
+        }
+
         return this._cachedConnectionDetails;
     };
 
@@ -122,172 +143,50 @@ export class TWClient {
     };
 
     /**
-     * Sets the appropriate authentication fields on the given request
-     * headers object using the connection details.
-     * @param options       The request options object on which to add authorization details.
-     */
-    private static _authorizeRequest(options: http.RequestOptions): void {
-
-        // Try to authorize using an app key if provided, which is the preferred method
-        if (this._connectionDetails.thingworxAppKey) {
-            options.headers!.appKey = this._connectionDetails.thingworxAppKey;
-        }
-        // Otherwise use the username and password combo
-        else if (this._connectionDetails.thingworxUser && this._connectionDetails.thingworxPassword) {
-            const username = this._connectionDetails.thingworxUser;
-            const password = this._connectionDetails.thingworxPassword;
-            options.auth = username + ':' + password;
-        }
-        else {
-            throw new Error('Unable to authorize a request to thingworx because an app key or username/password combo was not provided.');
-        }
-    }
-
-    /**
      * Performs a request, returning a promise that resolves with its response.
      * @param options       The requests's options.
      * @returns             A promise that resolves with the response when
      *                      the request finishes.
      */
     private static async _performRequest(options: TWClientRequestOptions, method: 'get' | 'post' = 'post'): Promise<TWClientResponse> {
-        const {thingworxServer: host} = this._connectionDetails;
+        const { thingworxServer: host } = this._connectionDetails;
 
         // Automatically prepend the base thingworx url
         options.url = `${host}/Thingworx/${options.url}`;
 
         // Automatically add the thingworx specific headers to options
-        const headers: https.RequestOptions['headers'] = Object.assign({}, options.headers || {}, {
+        const headers = Object.assign({}, options.headers || {}, {
             'X-XSRF-TOKEN': 'TWX-XSRF-TOKEN-VALUE',
             'X-THINGWORX-SESSION': 'true',
-            Accept: 'application/json'
-        });
+            Accept: 'application/json',
+        }, this._authenticationHeaders);
 
-        const url = new URL(options.url);
-        const requestOptions: https.RequestOptions = {
-            host: url.host,
-            hostname: url.hostname,
-            protocol: url.protocol,
-            port: url.port,
-            path: `${url.pathname}${url.search || ''}`
-        };
+        const fetchOptions: RequestInit = { method, headers };
 
-        // If a body is specified, add the content length header
-        let body: string | Buffer | undefined;
         if (options.body) {
             // If the body is specified as an object, stringify it
             if (typeof options.body == 'object') {
-                body = JSON.stringify(options.body);
+                fetchOptions.body = JSON.stringify(options.body);
+            } else {
+                fetchOptions.body = options.body;
             }
-            else {
-                body = options.body;
-            }
-
-            // Set the content-length header
-            headers['Content-Length'] = Buffer.byteLength(body, 'utf8');
-        }
-        else if (options.formData) {
-            // If a "form-data" is specified, set the content type to multipart/form-data
-            // and build the multipart request body
-            const boundary = `-------------------------${crypto.randomUUID()}`;
-
-            headers['Content-type'] = `multipart/form-data;boundary=${boundary}`;
-
-            // NOTE: Form data is only expected to have one key
-            for (const k in options.formData) {
-                const readStream = options.formData[k];
-                const filename = readStream.path.toString().split('/').pop();
-
-                // Prepare the multipart header and footer
-                const bodyHeader = Buffer.from([
-                    `--${boundary}`,
-                    `Content-Disposition: form-data; name=${k}; filename=${filename}`,
-                    '\r\n',
-                ].join('\r\n'));
-
-                const bodyFooter = Buffer.from(`\r\n--${boundary}--\r\n`);
-
-                // Read the file into a buffer
-                const fileChunks: (Buffer)[] = [bodyHeader];
-                await new Promise((resolve, reject) => {
-                    readStream.once('error', err => {
-                        reject(err);
-                    });
-
-                    readStream.once('end', resolve);
-
-                    readStream.on('data', chunk => {
-                        if (typeof chunk == 'string') {
-                            fileChunks.push(Buffer.from(chunk));
-                        }
-                        else {
-                            fileChunks.push(chunk);
-                        }
-                    });
-                });
-
-                // Merge the body header, file content and footer
-                fileChunks.push(bodyFooter);
-                body = Buffer.concat(fileChunks);
-
-                // This will only support a single multipart entry as the client currently never
-                // performs any request with multiple entries - the body is reset on each iteration
-            };
-
-            if (!body) {
-                throw new Error('Unable to perform request because an empty multipart form was specified');
-            }
-
-            headers['Content-Length'] = body.length;
+        } else if (options.formData) {
+            fetchOptions.body = options.formData;
         }
 
-        requestOptions.headers = headers;
-        requestOptions.method = method.toUpperCase();
+        const response = await fetch(options.url, fetchOptions);
 
-        // Set the appropriate authorization header
-        this._authorizeRequest(requestOptions);
-
-        const client = requestOptions.protocol == 'https:' ? https : http;
-
-        // Create and wait for the request to finish
-        return await new Promise((resolve, reject) => {
-            const request = client.request(requestOptions, (response) => {
-                const chunks: (string)[] = [];
-                
-                response.setEncoding('utf8');
-                response.on('data', chunk => chunks.push(chunk));
-                response.on('end', () => {
-                    // Join the chunks to obtain the full response
-                    const body = chunks.join('');
-
-                    // Create and return a 'request'-compatible response object
-                    resolve({
-                        body,
-                        headers: response.headers,
-                        statusCode: response.statusCode,
-                        statusMessage: response.statusMessage,
-                    });
-                });
-            });
-
-            request.on('error', (err) => {
-              reject(err);
-            });
-        
-            request.on('timeout', () => {
-              request.destroy();
-              reject(new Error('The request timed out'));
-            });
-        
-            if (body) {
-                request.write(body);
-            }
-            request.end();
-        });
+        return {
+            body: await response.text(),
+            headers: response.headers,
+            statusCode: response.status,
+            statusMessage: response.statusText,
+        };
     }
 
     /**
      * Deletes the given extension from the thingworx server.
-     * @param name      The name of the extenion to remove.
+     * @param name      The name of the extension to remove.
      * @returns         A promise that resolves with the server response when the
      *                  operation finishes.
      */
@@ -297,7 +196,7 @@ export class TWClient {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: {packageName: name}
+            body: { packageName: name }
         });
     }
 
@@ -307,10 +206,10 @@ export class TWClient {
      * @returns         A promise that resolves with the server response when
      *                  the operation finishes.
      */
-    static async importExtension(data: {file: fs.ReadStream}): Promise<TWClientResponse> {
+    static async importExtension(formData: FormData): Promise<TWClientResponse> {
         return await this._performRequest({
             url: `ExtensionPackageUploader?purpose=import`,
-            formData: data
+            formData: formData,
         });
     }
 
@@ -338,7 +237,7 @@ export class TWClient {
      */
     static async getEntity(name: string, kind: string): Promise<TWClientResponse> {
         const url = `${kind}/${name}${kind == 'Resources' ? '/Metadata' : ''}`;
-        return await this._performRequest({url}, 'get');
+        return await this._performRequest({ url }, 'get');
     }
 
     /**
@@ -372,16 +271,16 @@ export class TWClient {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                searchExpression: "**",
+                searchExpression: '**',
                 withPermissions: false,
-                sortBy: "name",
+                sortBy: 'name',
                 isAscending: true,
                 searchDescriptions: true,
                 aspects: {
                     isSystemObject: false
                 },
                 projectName: name,
-                searchText: ""
+                searchText: ''
             })
         });
     }
@@ -394,7 +293,7 @@ export class TWClient {
      */
     static async getExtensionTypes(name: string): Promise<TWClientResponse> {
         const url = `Common/extensions/${name}/ui/@types/index.d.ts`;
-        return await this._performRequest({url}, 'get');
+        return await this._performRequest({ url }, 'get');
     }
 
     /**
@@ -409,8 +308,203 @@ export class TWClient {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({packageName: name})
+            body: JSON.stringify({ packageName: name })
         });
     }
 
+    /**
+     * Executes the source control import of a path on the file repository into ThingWorx
+     * @param project Name of the project being imported
+     * @param fileRepository Name of the ThingWorx FileRepository thing from where the import happens
+     * @param path Path in the `fileRepository` where the entities are
+     * @returns The response from the server
+     */
+    static async sourceControlImport(
+        project: string,
+        fileRepository: string,
+        path: string,
+    ): Promise<TWClientResponse> {
+        const url = `Resources/SourceControlFunctions/Services/ImportSourceControlledEntities`;
+
+        try {
+            const response = await this._performRequest({
+                url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    repositoryName: fileRepository,
+                    path: path,
+                    includeDependents: false,
+                    overwritePropertyValues: true,
+                    useDefaultDataProvider: false,
+                    withSubsystems: false,
+                },
+            });
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error executing source control import for project '${project}' because: ${err}`);
+        }
+    }
+
+    /**
+     * Uploads a local file into a ThingWorx file repository
+     * @param filePath Local path to the folder the file is in
+     * @param fileName Name of the file to be uploaded
+     * @param fileRepository Name of the TWX file repository the file should be uploaded to
+     * @param targetPath Remote path in the TWX file repository where the file should be stored
+     * @returns details about the success status
+     */
+    static async uploadFile(
+        filePath: string,
+        fileName: string,
+        fileRepository: string,
+        targetPath: string,
+    ): Promise<TWClientResponse> {
+        try {
+            // load the file from the build folder
+            let formData = new FormData();
+            formData.append('upload-repository', fileRepository);
+            formData.append('upload-path', targetPath);
+            formData.append('upload-files', new Blob([fs.readFileSync(Path.join(filePath, fileName))]), fileName);
+            formData.append('upload-submit', 'Upload');
+
+            // POST request to the Thingworx FileRepositoryUploader endpoint
+            const response = await this._performRequest({ url: 'FileRepositoryUploader', formData });
+
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error uploading file '${filePath}' into repository because: ${err}`);
+        }
+    }
+
+    /**
+     * Performs a unzip operation on a remote file in a ThingWorx file repository
+     * @param fileRepository Name of the TWX FileRepository thing
+     * @param filePath Remote path to where the zip file is
+     * @param targetFolder Remote path to where the file should be extracted
+     * @returns 
+     */
+    static async unzipAndExtractRemote(
+        fileRepository: string,
+        filePath: string,
+        targetFolder: string,
+    ) {
+        const url = `Things/${fileRepository}/Services/ExtractZipArchive`;
+
+        try {
+            const response = await this._performRequest({
+                url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    path: targetFolder,
+                    zipFileName: filePath,
+                }
+            });
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error executing remote file unzip because: ${err}`);
+        }
+    }
+
+    /**
+     * Deletes a remote folder in a ThingWorx file repository
+     * @param fileRepository Name of the TWX FileRepository thing
+     * @param targetFolder Remote path to the folder to be deleted
+     * @returns details about the success status
+     */
+    static async deleteRemoteDirectory(fileRepository: string, targetFolder: string) {
+        const url = `Things/${fileRepository}/Services/DeleteFolder`;
+        try {
+            const response = await this._performRequest({
+                url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    path: targetFolder,
+                },
+            });
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        } catch (err) {
+            throw new Error(`Error executing remote folder delete because: ${err}`);
+        }
+    }
+
+    /**
+     * Execute a source control export of a project
+     * @param project ThingWorx project name
+     * @param fileRepository Name of the FileRepository to store the export
+     * @param path Remote path to where the files should be exported to
+     * @param name Name of the folder where the files are stored
+     * @returns An URL to where the zip containing the exports is found
+     */
+    static async sourceControlExport(
+        project: string,
+        fileRepository: string,
+        path: string,
+        name: string,
+    ): Promise<string> {
+        const { thingworxServer: host } = this._connectionDetails;
+
+        try {
+            // Do a ExportToSourceControl to export the project
+            const exportResponse = await this._performRequest({
+                url: 'Resources/SourceControlFunctions/Services/ExportSourceControlledEntities',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    projectName: project,
+                    repositoryName: fileRepository,
+                    path: path,
+                    name: name,
+                    exportMatchingModelTags: true,
+                    includeDependents: false,
+                },
+            });
+            if (exportResponse.statusCode != 200) {
+                throw new Error(`Got status code ${exportResponse.statusCode} (${exportResponse.statusMessage}). Body: ${exportResponse.body}`);
+            }
+            // Create a zip from the folder that was exported
+            await this._performRequest({
+                url: `Things/${fileRepository}/Services/CreateZipArchive`,
+                headers: {
+                    'Content-Type': 'application/json'
+                }, 
+                body: {
+                    newFileName: project + ".zip",
+                    path: path,
+                    files: path + "/" + project + "/",
+                },
+            });
+            return `${host}/Thingworx/FileRepositories/${fileRepository}/${path}/${project}.zip`;
+        } catch (err) {
+            throw new Error(`Error executing source control export for project '${project}' because: ${err}`);
+        }
+    }
+
+    /**
+     * Downloads a remote file into the given target path
+     * @param fileUrl Path to the file to download
+     * @param targetPath Local path to where the file should be saved
+     */
+    static async downloadFile(fileUrl: string, targetPath: string) {
+        const response = await fetch(fileUrl, { headers: this._authenticationHeaders });
+        fs.writeFileSync(targetPath, Buffer.from(await (await response.blob()).arrayBuffer()));
+    }
 }
