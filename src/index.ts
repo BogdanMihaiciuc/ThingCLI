@@ -106,12 +106,14 @@ async function main() {
 
 
 if (command) {
-    console.log(`\x1b[1mRunning ${command}\x1b[0m`);
+    const pkg = require('../package.json');
+    console.log(`\x1b[1mRunning ${command} (v${pkg.version})\x1b[0m`);
     main();
 }
 else {
-    console.log(`Usage:
-bm-thing-cli <command> [--argument] ...
+    const pkg = require('../package.json');
+    console.log(`ThingCLI version ${pkg.version} usage:
+twc <command> [--argument] ...
 
 Available commands:
  * \x1b[1mdeclarations\x1b[0m
