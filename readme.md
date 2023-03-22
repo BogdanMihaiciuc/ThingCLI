@@ -133,7 +133,7 @@ To build the project, run `npm run build` in the root of the project. This will 
 
 ### Contributors
 
- - [stefan-lacatus](https://github.com/stefan-lacatus): retainVersion argument, method helpers, generate-api command, bug fixes
+ - [stefan-lacatus](https://github.com/stefan-lacatus): pull and push commands, retainVersion argument, method helpers, generate-api command, bug fixes
 
 #  License
 
