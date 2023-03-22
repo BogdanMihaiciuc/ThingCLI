@@ -2,6 +2,8 @@
 
 When printing out diagnostic messages, if the message indicates a relevant line it will be printed out before the message.
 
+Creating a project via the `init` command no longer adds `@types/node` to the project dependencies.
+
 # 1.6.1
 
 Updates to transformer version 1.6.1, which includes the type definitions for `SQLThing`.

@@ -222,7 +222,7 @@ export async function init() {
 
     // Run npm install to add the required dependencies
     await new Promise((resolve, reject) => {
-        spawn('npm', ['install', '--save-dev', '@types/node@17.X', 'bm-thing-cli'], {cwd, stdio: 'inherit', shell: true}).on('close', resolve);
+        spawn('npm', ['install', '--save-dev', 'bm-thing-cli'], {cwd, stdio: 'inherit', shell: true}).on('close', resolve);
     });
 }
 
