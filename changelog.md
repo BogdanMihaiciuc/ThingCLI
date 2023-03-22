@@ -4,6 +4,14 @@ When printing out diagnostic messages, if the message indicates a relevant line 
 
 Creating a project via the `init` command no longer adds `@types/node` to the project dependencies.
 
+Adds support in multi-project repositories for projects that contain only XML entities. This makes it possible to have a repository that has a ThingWorx project written in typescript (like the backend) and another that has only XML entities (like the mashups). ([stefan-lacatus](https://github.com/stefan-lacatus)) 
+
+Adds a new `push` command that packages and uploads the xml projects using SourceControlImport, while uploading typescript projects as extensions. ([stefan-lacatus](https://github.com/stefan-lacatus)) 
+
+Adds a new `pull` command that pulls all xml project entities and updates the local XML files. ([stefan-lacatus](https://github.com/stefan-lacatus)) 
+
+Adds a new `--projects` argument that can be specified for the `build`, `upload`, `deploy`, `pull` and `push` commands to limit the projects that are included when processing those commands.
+
 # 1.6.1
 
 Updates to transformer version 1.6.1, which includes the type definitions for `SQLThing`.
