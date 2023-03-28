@@ -59,8 +59,14 @@ export async function zip(): Promise<void> {
         // Ensure that the base out path exists
         if (!FS.existsSync(baseOutPath)) FS.mkdirSync(baseOutPath)
 
+        // List of projects included in the build
+        const projects = TWProjectUtilities.projectsWithArguments(args);
+
         // Zip each project
         for (const p of TWProjectUtilities.projects()) {
+            if (projects && !projects.includes(p.name)) {
+              continue;
+            }
             const zipName = `${packageJSON.name}-${p.name}-${packageJSON.version}.zip`;
             const path = `${cwd}/build/${p.name}`;
             await zipPath(zipName, path, baseOutPath);
