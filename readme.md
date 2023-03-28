@@ -34,7 +34,7 @@ Builds the thingworx declarations for the project, making it possible to referen
 
 Usage:
 ```bash
-npx twc build [--merged|--separate] [--debug] [--trace]
+npx twc build [--merged|--separate] [--debug] [--trace] [--projects]
 ```
 
 Builds a thingworx extension package from the typescript project which can be installed on a thingworx server.
@@ -43,11 +43,15 @@ Arguments:
  - `--separate`: Can be used with a multi-project repository and is the default if `--merged` isn't specified. Causes the projects to each have their own separate extension.
  - `--debug`: Creates a debug build.
  - `--trace`: Creates a trace build.
+ - `--projects`: If specified, this limits the projects that are built to the ones specified in this argument. Usage:
+```bash
+twc build --projects=Project1,Project2
+```
 
 ## `upload`
 Usage:
 ```bash
-npx twc upload [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version]
+npx twc upload [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--projects]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json.
@@ -58,10 +62,26 @@ Arguments:
 ## `deploy`
 Usage:
 ```bash
-npx twc deploy [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version]
+npx twc deploy [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--projects]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json. After the installation is complete, it runs the services marked with the `@deploy` decorator.
+
+## `push`
+Usage:
+```bash
+npx twc push [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--projects]
+```
+
+Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json, while uploading any XML projects as regular editable entities.
+
+## `pull`
+Usage:
+```bash
+npx twc pull [--projects]
+```
+
+Pulls XML entities from the thingworx server for all local XML projects. If the `--projects` argument is specified, any projects included must also exist locally.
 
 ## `remove`
 Usage:
@@ -133,6 +153,7 @@ To build the project, run `npm run build` in the root of the project. This will 
 
 ### Contributors
 
+ - [BogdanMihaiciuc](https://github.com/BogdanMihaiciuc): main developer
  - [stefan-lacatus](https://github.com/stefan-lacatus): pull and push commands, retainVersion argument, method helpers, generate-api command, bug fixes
 
 #  License
