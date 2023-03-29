@@ -1,3 +1,7 @@
+# 1.7.1
+
+Updates to transformer 1.7.1, which disables downleveling arrow functions to bound functions.
+
 # 1.7
 
 When printing out diagnostic messages, if the message indicates a relevant line it will be printed out before the message.
