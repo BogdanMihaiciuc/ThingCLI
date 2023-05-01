@@ -1,3 +1,7 @@
+# 1.7.2
+
+Updates to transformer 1.7.2. For more information, see [1.7.2](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/1.7.2)
+
 # 1.7.1
 
 Updates to transformer 1.7.1, which disables downleveling arrow functions to bound functions.
