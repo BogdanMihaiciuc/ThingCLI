@@ -155,6 +155,7 @@ To build the project, run `npm run build` in the root of the project. This will 
 
  - [BogdanMihaiciuc](https://github.com/BogdanMihaiciuc): main developer
  - [stefan-lacatus](https://github.com/stefan-lacatus): pull and push commands, retainVersion argument, method helpers, generate-api command, bug fixes
+ - [CozminM](https://github.com/CozminM): compatiblity with thingworx 8.5
 
 #  License
 
