@@ -1,3 +1,9 @@
+# 1.7.3
+
+Removes the `projectType` aspect from project entities, which prevented the projects from being imported on Thingworx 8.5 or earlier. ([CozminM](https://github.com/CozminM))
+
+Updates to transformer 1.7.3 with a similar change for compatibility with previous thingworx versions.
+
 # 1.7.2
 
 Updates to transformer 1.7.2. For more information, see [1.7.2](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/1.7.2)
