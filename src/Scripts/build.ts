@@ -382,7 +382,7 @@ function projectEntityNamed(project: TWProjectWithDependencies, twConfig: TWConf
                         {
                             $: {
                                 artifactId: "",
-                                "aspect.projectType": "Component",
+                                // "aspect.projectType": "Component",
                                 dependsOn: JSON.stringify(dependencies),
                                 description: "",
                                 documentationContent: "",
