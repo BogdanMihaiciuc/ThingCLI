@@ -1,3 +1,7 @@
+# 1.7.4
+
+Updates to transformer 1.7.4 which resolves an issue that prevented location literal objects from being used.
+
 # 1.7.3
 
 Removes the `projectType` aspect from project entities, which prevented the projects from being imported on Thingworx 8.5 or earlier. ([CozminM](https://github.com/CozminM))
