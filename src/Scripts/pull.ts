@@ -1,9 +1,10 @@
 import * as FS from 'fs';
 import * as Path from 'path';
-import { TWConfig } from 'bm-thing-transformer';
+import { TWConfig, TWEntityKind, JsonThingToTsTransformer } from 'bm-thing-transformer';
 import { TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
+import { ProgressBar } from '../Utilities/ProgressBar';
 
 const [path, bin, command, ...args] = process.argv;
 
@@ -15,7 +16,7 @@ export async function pull(): Promise<void> {
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
     // This command requires that the --xml argument be specified
-    if (!args.includes('--xml')) {
+    if (!args.includes('--xml') && !args.includes('--ts')) {
         throw new Error('Unable to pull entities because a format has not been specified.');
     }
 
@@ -32,10 +33,15 @@ export async function pull(): Promise<void> {
             if (project.kind == TWProjectKind.XML) {
                 pullProjectToFolder(Path.join(project.path, 'src'), project.name);
             }
+            if (project.kind == TWProjectKind.TypeScript && args.includes('--ts')) {
+                pullProjectToTypescript(Path.join(project.path, 'src'), project.name);
+            }
         };
     }
     else {
-        throw new Error('Pull is only supported in multi-project mode.')
+        if (args.includes('--ts')) {
+            pullProjectToTypescript('src', twConfig.projectName);
+        }
     }
 }
 
@@ -69,4 +75,135 @@ async function pullProjectToFolder(path: string, projectName: string) {
     await TWClient.deleteRemoteDirectory(repositoryName, `${repositoryPath}/${projectName}`);
 
     process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Exported ${projectName} from ${TWClient.server} to path ${path} \n`);
+}
+
+/**
+ * Exports a given ThingWorx project entities as typescript files
+ * @param path Path to where the exported typescript files are emitted
+ * @param projectName Name of the project to export
+ */
+async function pullProjectToTypescript(path: string, projectName: string) {
+    let progress = 0;
+    let entity = '';
+    const transformer = new JsonThingToTsTransformer();
+
+
+    console.log(`\x1b[2m❯\x1b[0m Transforming project ${projectName} from ${TWClient.server} into Typescript\n`);
+
+    // Create a progress bar to track installation
+    const bar = new ProgressBar();
+    bar.start();
+
+    // A higher level wrapper around the cli-progress api
+    const transformProgress = {
+        get progress() {
+            return progress;
+        },
+        set progress(p) {
+            progress = p;
+            bar.update(progress, entity);
+        },
+
+        get entity() {
+            return entity;
+        },
+        set entity(e) {
+            entity = e;
+            bar.update(progress, entity);
+        }
+    }
+
+    transformProgress.entity = 'Projects/' + projectName;
+
+    // Get the list of entities in the project
+    const projectEntities = await getProjectEntities(projectName);
+
+    transformProgress.progress = 0.1;
+    const slice = (1 - 0.1) / projectEntities.length;
+
+
+    const handledProperties = {
+        Things: TWEntityKind.Thing,
+        ThingTemplates: TWEntityKind.ThingTemplate,
+        ThingShapes: TWEntityKind.ThingShape,
+        DataShapes: TWEntityKind.DataShape,
+        Organizations: TWEntityKind.Organization
+    }
+
+    const users = await Promise.all(projectEntities
+        .filter(e => e.parentType == "Users")
+        .map(async e => JSON.parse((await TWClient.getEntity(e.name, e.parentType)).body))
+    );
+    transformProgress.progress += users.length * slice;
+
+
+    const groups = await Promise.all(projectEntities
+        .filter(e => e.parentType == "Groups")
+        .map(async e => JSON.parse((await TWClient.getEntity(e.name, e.parentType)).body))
+    );
+
+    transformProgress.progress += groups.length * slice;
+
+    // Generate a user list containing all users and groups
+    const userList = `
+class MyUserList extends UserList {
+    ${users.map(u => {
+        return `${u.name}: UserExtensionLiteral = {${u.configurationTables.UserExtensions.rows.map(r => `${r.name}: "${r.value}"`).join(', \n\t\t')}
+    }`}).join(';\n\n\t')}
+    ${groups.map(g => {
+        return `${g.name} = [${g.members.map(r => `${r.type}s.${r.name}`).join(', ')}]`
+    }).join(';\n\n\t')}
+}
+`
+    // write the user list
+    FS.mkdirSync(Path.join(path, 'UserLists'), { recursive: true });
+    FS.writeFileSync(Path.join(path, 'UserLists', 'index.ts'), userList);
+
+
+    // Iterate over each entity in the project, and convert it to typescript (if possible)
+    for (const entity of projectEntities.filter(e => e.parentType != 'Users' && e.parentType != 'Groups')) {
+        transformProgress.entity = `${entity.parentType}/${entity.name}`;
+        transformProgress.progress += slice;
+        if(handledProperties[entity.parentType]) {
+            const converted = await convertEntityToTs(entity.name, entity.parentType, handledProperties[entity.parentType], transformer);
+            FS.mkdirSync(Path.join(path, entity.parentType), { recursive: true });
+            FS.writeFileSync(Path.join(path, entity.parentType, `${entity.name}.ts`), converted.declaration);
+        } else {
+            console.error(`\x1b[2m❯\x1b[0m Skipping entity ${entity.parentType}/${entity.name}.`);
+        }
+    }
+}
+
+/**
+ * Gets a listing of the entities in the given project, including their name, parent type.
+ * @param name          The name of the project.
+ * @returns             A promise that resolves with the infotable of entities in the project.
+ */
+async function getProjectEntities(name: string): Promise<{ name: string, parentType: string, isSystemObject: boolean }[]> {
+    const response = await TWClient.getProjectEntities(name);
+
+    if (response.statusCode != 200) {
+        throw new Error(`Could not get the entity list for project ${name}.\nServer returned status code ${response.statusCode}\nbody:\n${response.body}`);
+    }
+
+    return JSON.parse(response.body).rows;
+}
+
+/**
+ * Converts a JSON metadata from a ThingWorx entity into a typescript declaration.
+ * @param entityName Name of the entity
+ * @param entityType Type of entity, pluralized, as coming from ThingWorx
+ * @param kind Internal name of the entity kind
+ * @param transformer Transformer to use to convert the entity
+ * @returns A promise that resolves with the typescript declaration for the entity
+ */
+async function convertEntityToTs(entityName: string, entityType: string, kind: TWEntityKind, transformer: JsonThingToTsTransformer): Promise<{ declaration: string, className: string }> {
+    const response = await TWClient.getEntity(entityName, entityType);
+
+    if (response.statusCode != 200) {
+        throw new Error(`Could not get the entity definition for ${entityName}.\nServer returned status code ${response.statusCode}\nbody:\n${response.body}`);
+    }
+
+    const metadata = JSON.parse(response.body);
+    return transformer.createTsDeclarationForEntity(metadata, kind);
 }
