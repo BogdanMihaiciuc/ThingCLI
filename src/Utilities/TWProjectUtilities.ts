@@ -12,7 +12,7 @@ export enum TWProjectKind {
     TypeScript,
 
     /**
-     * Indicates that the proejct is an XML projects whose files can be directly imported into Thingworx.
+     * Indicates that the project is an XML projects whose files can be directly imported into Thingworx.
      */
     XML,
 } 

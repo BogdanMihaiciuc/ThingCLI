@@ -15,9 +15,12 @@ export async function pull(): Promise<void> {
     // Load the twconfig file which contains compilation options.
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
 
-    // This command requires that the --xml argument be specified
+    // This command requires that either --xml or --ts is specified (but not both)
     if (!args.includes('--xml') && !args.includes('--ts')) {
         throw new Error('Unable to pull entities because a format has not been specified.');
+    }
+    if(args.includes('--ts') && args.includes('--xml')) {
+        throw new Error('Unable to pull entities because both formats have been specified.');
     }
 
     const projects = TWProjectUtilities.projectsWithArguments(args);
@@ -83,8 +86,6 @@ async function pullProjectToFolder(path: string, projectName: string) {
  * @param projectName Name of the project to export
  */
 async function pullProjectToTypescript(path: string, projectName: string) {
-    let progress = 0;
-    let entity = '';
     const transformer = new JsonThingToTsTransformer();
 
 
