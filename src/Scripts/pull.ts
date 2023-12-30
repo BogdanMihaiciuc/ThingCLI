@@ -94,84 +94,74 @@ async function pullProjectToTypescript(path: string, projectName: string) {
     const bar = new ProgressBar();
     bar.start();
 
-    // A higher level wrapper around the cli-progress api
-    const transformProgress = {
-        get progress() {
-            return progress;
-        },
-        set progress(p) {
-            progress = p;
-            bar.update(progress, entity);
-        },
+    try {
+        bar.update(0, `Getting project ${projectName} entities...`)
 
-        get entity() {
-            return entity;
-        },
-        set entity(e) {
-            entity = e;
-            bar.update(progress, entity);
+        // Get the list of entities in the project
+        const projectEntities = await getProjectEntities(projectName);
+
+        bar.update(0.1, 'Starting transformation...');
+        let progress = 0;
+        const slice = (1 - 0.1) / projectEntities.length;
+
+        // First get the list of users in the project
+        const users = await Promise.all(projectEntities
+            .filter(e => e.parentType == "Users")
+            .map(async e => JSON.parse((await TWClient.getEntity(e.name, e.parentType)).body))
+        );
+        progress += users.length * slice;
+        bar.update(progress, 'Transforming users in the project...');
+
+        // Then, the list of Groups
+        const groups = await Promise.all(projectEntities
+            .filter(e => e.parentType == "Groups")
+            .map(async e => JSON.parse((await TWClient.getEntity(e.name, e.parentType)).body))
+        );
+    
+        progress += groups.length * slice;
+        bar.update(progress, 'Transforming groups in the project...');
+
+        // Generate a user list containing all users and groups
+        const userList = `
+    class MyUserList extends UserList {
+        ${users.map(u => {
+            return `${u.name}: UserExtensionLiteral = {${u.configurationTables.UserExtensions.rows.map(r => `${r.name}: "${r.value}"`).join(', \n\t\t')}
+        }`}).join(';\n\n\t')}
+        ${groups.map(g => {
+            return `${g.name} = [${g.members.map(r => `${r.type}s.${r.name}`).join(', ')}]`
+        }).join(';\n\n\t')}
+    }
+    `
+        // write the user list
+        FS.mkdirSync(Path.join(path, 'UserLists'), { recursive: true });
+        FS.writeFileSync(Path.join(path, 'UserLists', 'index.ts'), userList);
+
+        // These are the entity types that we know how to handle, and their internal names
+        const handledProperties = {
+            Things: TWEntityKind.Thing,
+            ThingTemplates: TWEntityKind.ThingTemplate,
+            ThingShapes: TWEntityKind.ThingShape,
+            DataShapes: TWEntityKind.DataShape,
+            Organizations: TWEntityKind.Organization
         }
-    }
-
-    transformProgress.entity = 'Projects/' + projectName;
-
-    // Get the list of entities in the project
-    const projectEntities = await getProjectEntities(projectName);
-
-    transformProgress.progress = 0.1;
-    const slice = (1 - 0.1) / projectEntities.length;
-
-
-    const handledProperties = {
-        Things: TWEntityKind.Thing,
-        ThingTemplates: TWEntityKind.ThingTemplate,
-        ThingShapes: TWEntityKind.ThingShape,
-        DataShapes: TWEntityKind.DataShape,
-        Organizations: TWEntityKind.Organization
-    }
-
-    const users = await Promise.all(projectEntities
-        .filter(e => e.parentType == "Users")
-        .map(async e => JSON.parse((await TWClient.getEntity(e.name, e.parentType)).body))
-    );
-    transformProgress.progress += users.length * slice;
-
-
-    const groups = await Promise.all(projectEntities
-        .filter(e => e.parentType == "Groups")
-        .map(async e => JSON.parse((await TWClient.getEntity(e.name, e.parentType)).body))
-    );
-
-    transformProgress.progress += groups.length * slice;
-
-    // Generate a user list containing all users and groups
-    const userList = `
-class MyUserList extends UserList {
-    ${users.map(u => {
-        return `${u.name}: UserExtensionLiteral = {${u.configurationTables.UserExtensions.rows.map(r => `${r.name}: "${r.value}"`).join(', \n\t\t')}
-    }`}).join(';\n\n\t')}
-    ${groups.map(g => {
-        return `${g.name} = [${g.members.map(r => `${r.type}s.${r.name}`).join(', ')}]`
-    }).join(';\n\n\t')}
-}
-`
-    // write the user list
-    FS.mkdirSync(Path.join(path, 'UserLists'), { recursive: true });
-    FS.writeFileSync(Path.join(path, 'UserLists', 'index.ts'), userList);
-
-
-    // Iterate over each entity in the project, and convert it to typescript (if possible)
-    for (const entity of projectEntities.filter(e => e.parentType != 'Users' && e.parentType != 'Groups')) {
-        transformProgress.entity = `${entity.parentType}/${entity.name}`;
-        transformProgress.progress += slice;
-        if(handledProperties[entity.parentType]) {
-            const converted = await convertEntityToTs(entity.name, entity.parentType, handledProperties[entity.parentType], transformer);
-            FS.mkdirSync(Path.join(path, entity.parentType), { recursive: true });
-            FS.writeFileSync(Path.join(path, entity.parentType, `${entity.name}.ts`), converted.declaration);
-        } else {
-            console.error(`\x1b[2m❯\x1b[0m Skipping entity ${entity.parentType}/${entity.name}.`);
+        // Iterate over each entity in the project, and convert it to typescript (if possible)
+        for (const entity of projectEntities.filter(e => e.parentType != 'Users' && e.parentType != 'Groups')) {
+            progress += slice;
+            bar.update(progress, `${entity.parentType}/${entity.name}`);
+            if(handledProperties[entity.parentType]) {
+                const converted = await convertEntityToTs(entity.name, entity.parentType, handledProperties[entity.parentType], transformer);
+                FS.mkdirSync(Path.join(path, entity.parentType), { recursive: true });
+                FS.writeFileSync(Path.join(path, entity.parentType, `${entity.name}.ts`), converted.declaration);
+            } else {
+                bar.log(`\x1b[2m❯\x1b[0m Skipping over unsupported entity ${entity.parentType}/${entity.name}.`);
+            }
         }
+
+        bar.update(1, 'Completed. Keep in mind that manual changes need to be made to the generated files.');
+    } finally {
+        bar.stop();
     }
+
 }
 
 /**
