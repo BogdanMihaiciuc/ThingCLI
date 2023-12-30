@@ -1,6 +1,6 @@
 import * as FS from 'fs';
 import * as Path from 'path';
-import { TWConfig, TWEntityKind, JsonThingToTsTransformer } from 'bm-thing-transformer';
+import { TWConfig, TWEntityKind, JsonEntityToTsTransformer } from 'bm-thing-transformer';
 import { TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
@@ -86,7 +86,7 @@ async function pullProjectToFolder(path: string, projectName: string) {
  * @param projectName Name of the project to export
  */
 async function pullProjectToTypescript(path: string, projectName: string) {
-    const transformer = new JsonThingToTsTransformer();
+    const transformer = new JsonEntityToTsTransformer();
 
 
     console.log(`\x1b[2m❯\x1b[0m Transforming project ${projectName} from ${TWClient.server} into Typescript\n`);
@@ -188,7 +188,7 @@ async function getProjectEntities(name: string): Promise<{ name: string, parentT
  * @param transformer Transformer to use to convert the entity
  * @returns A promise that resolves with the typescript declaration for the entity
  */
-async function convertEntityToTs(entityName: string, entityType: string, kind: TWEntityKind, transformer: JsonThingToTsTransformer): Promise<{ declaration: string, className: string }> {
+async function convertEntityToTs(entityName: string, entityType: string, kind: TWEntityKind, transformer: JsonEntityToTsTransformer): Promise<{ declaration: string, className: string }> {
     const response = await TWClient.getEntity(entityName, entityType);
 
     if (response.statusCode != 200) {
