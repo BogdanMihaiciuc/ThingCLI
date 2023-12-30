@@ -54,22 +54,10 @@ export class ProgressBar {
     private _normalizedProgress: number = 0;
 
     /**
-     * A callback that is invoked on SIGINT while the progress bar is running.
-     * Reenables the cursor.
-     */
-    private _sigintHandler = () => {
-        process.stdout.write('\u001B[?25h');
-        process.exit();
-    };
-
-    /**
      * Draws the progress bar. Until invoking `stop`, you should not write to stdout.
      */
     start() {
         this._render();
-
-        // Reenable the cursor if the process stops
-        process.on('SIGINT', this._sigintHandler);
     }
 
     /**
@@ -110,7 +98,7 @@ export class ProgressBar {
         }
 
         // Close the bar and draw the message, then hide the cursor
-        process.stdout.write(`${EndSymbol} | ${(this._progress * 100) | 0}%\n\x1b[2m${this._message}\x1b[0m\u001B[?25l`);
+        process.stdout.write(`${EndSymbol} | ${(this._progress * 100) | 0}%\n\x1b[2m${this._message}\x1b[0m`);
     }
 
     /**
@@ -132,9 +120,6 @@ export class ProgressBar {
      * Moves the cursor to the next line.
      */
     stop() {
-        process.stdout.write('\n\u001B[?25h');
-
-        process.off('SIGINT', this._sigintHandler);
     }
 
     /**
@@ -143,9 +128,7 @@ export class ProgressBar {
      */
     destroy() {
         this._clear();
-        process.stdout.write('\n\u001B[?25h');
 
-        process.off('SIGINT', this._sigintHandler);
     }
 
 }
