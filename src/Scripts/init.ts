@@ -353,6 +353,11 @@ function tsConfigDefault() {
             noImplicitOverride: true,
             strict: true,
             declaration: true,
+            jsx: "react",
+            jsxFactory: "defineWidget",
+            jsxFragmentFactory: "defineWidget",
+            skipLibCheck: true,
+            moduleResolution: "Node",
             lib: [
                 "esnext"
             ],

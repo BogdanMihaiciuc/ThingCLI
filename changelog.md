@@ -1,3 +1,11 @@
+# 2.0.0
+
+Adds support for loading UIPlugins specified in a `twconfig.json` file.
+
+Adds a new `install-widgets` command that can be used to install widget typings and defaults to be used in mashups.
+
+Updates to transformer 2.0.0 which adds support for mashups, style definitions, state definitions, CSS and core ui mashups.
+
 # 1.7.4
 
 Updates to transformer 1.7.4 which resolves an issue that prevented location literal objects from being used.

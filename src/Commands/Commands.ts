@@ -73,4 +73,9 @@ export const enum Commands {
      *  * XML projects are uploaded as regular, editable entities
      */
     push = 'push',
+
+    /**
+     * The install-widgets command that pulls the declaration of widget types from the thingworx server.
+     */
+    installWidgets = 'install-widgets',
 }

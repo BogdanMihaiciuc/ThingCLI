@@ -10,6 +10,7 @@ import { deploy } from './Scripts/deploy';
 import { remove } from './Scripts/remove';
 import { addProject } from './Scripts/add-project';
 import { install } from './Scripts/install';
+import { installWidgets } from './Scripts/install-widgets';
 import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
 import { generateAPI } from './Scripts/generate-api';
@@ -87,6 +88,9 @@ async function main() {
             }
             await install(UMLMode);
             break;
+        case Commands.installWidgets:
+            await installWidgets();
+            break;
         case Commands.init:
             await init();
             break;
@@ -136,6 +140,12 @@ Available commands:
 
  * \x1b[1mremove\x1b[0m [--merged] [--separate]
    Removes the thingworx extension
+
+ * \x1b[1minstall\x1b[0m
+   Pulls entity definitions for dependent projects from the thingworx server.
+
+ * \x1b[1minstall-widgets\x1b[0m <file>
+   Pulls widget types from the specified file to be used in mashups.
 
  * \x1b[1madd-project\x1b[0m
    Adds a new project to the repository

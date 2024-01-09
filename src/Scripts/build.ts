@@ -1,4 +1,4 @@
-import { TWThingTransformerFactory, TWConfig, TWThingTransformer, DiagnosticMessageKind, DiagnosticMessage, DeploymentEndpoint } from 'bm-thing-transformer';
+import { TWThingTransformerFactory, TWConfig, TWThingTransformer, DiagnosticMessageKind, DiagnosticMessage, DeploymentEndpoint, UITransformer } from 'bm-thing-transformer';
 import { randomUUID } from 'crypto';
 import * as FS from 'fs';
 import * as Path from 'path';
@@ -59,6 +59,20 @@ export async function build(push: boolean = false): Promise<DeploymentEndpoint[]
     // In multi project mode, a build mode should be specified, defaulting to separate if one is not provided
     const isMerged = args.includes('--merged');
     const isSeparate = args.includes('--separate') || !isMerged;
+
+    // UI builds might require plugins, if any are defined, load them
+    if (twConfig.UIPlugins && typeof twConfig.UIPlugins === 'object') {
+        for (const widget in twConfig.UIPlugins) {
+            let importPath = twConfig.UIPlugins[widget];
+            // If the import is a path, make it relative to the repo path
+            if (importPath.startsWith('.') || importPath.startsWith('/')) {
+                importPath = Path.resolve(cwd, importPath);
+            }
+
+            const module = require(importPath).default;
+            UITransformer.plugins[widget] = new module;
+        }
+    }
 
     const projects = TWProjectUtilities.projectsWithArguments(args);
 

@@ -93,6 +93,16 @@ export async function upgrade() {
         "./node_modules/bm-thing-transformer/static/**/*.d.ts",
         "./node_modules/bm-thing-cli/node_modules/bm-thing-transformer/static/**/*.d.ts"
     );
+
+    // Add the required UI JSX properties
+    Object.assign(tsConfig.compilerOptions, {
+        jsx: "react",
+        jsxFactory: "defineWidget",
+        jsxFragmentFactory: "defineWidget",
+        skipLibCheck: true,
+        moduleResolution: "Node",
+    });
+
     FS.writeFileSync(`${cwd}/tsconfig.json`, JSON.stringify(tsConfig, undefined, 4));
 
     // Remove the gulpfile, since building is now handled by bm-thing-cli
