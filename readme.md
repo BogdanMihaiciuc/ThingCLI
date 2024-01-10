@@ -78,10 +78,15 @@ Builds a thingworx extension package from the typescript project, then imports i
 ## `pull`
 Usage:
 ```bash
-npx twc pull [--projects]
+npx twc pull [--projects] [--ts|--xml]
 ```
+Pulls entities in a project from the ThingWorx server.
 
-Pulls XML entities from the thingworx server for all local XML projects. If the `--projects` argument is specified, any projects included must also exist locally.
+If the `--projects` argument is specified, any projects included must also exist locally. Otherwise, all configured projects are exported.
+
+An output format should be specified (defaults `--xml`).
+- If `--xml` is specified, entities in the specified project will be exported using the _"Export To Source Control"_ method.
+- If `--ts` is specified, the supported entities are converted to Typescript. This should be done if you want to migrate an existing project to Typescript. Note that developers are expected to do changes to the generated files.
 
 ## `remove`
 Usage:
@@ -94,7 +99,7 @@ Removes the current version of the extension(s) from the thingworx server define
 ## `add-project`
 Usage
 ```bash
-npx twc add-project
+npx twc add-project [--ts|--xml]
 ```
 
 Adds a new thingworx project to the repository. If the repository is currently a single project, it will convert it into a multi-project repository.

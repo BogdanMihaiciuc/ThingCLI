@@ -1,7 +1,9 @@
 import Enquirer from "enquirer";
 import * as FS from 'fs';
 import { TWConfig } from 'bm-thing-transformer';
-import { TWProjectUtilities } from "../Utilities/TWProjectUtilities";
+import { TWProjectKind, TWProjectUtilities } from "../Utilities/TWProjectUtilities";
+
+const [...args] = process.argv;
 
 /**
  * Adds a project to the repository. If the repository is in single-project mode,
@@ -17,7 +19,7 @@ export async function addProject(): Promise<void> {
     // If the repository is configured for a single project only warn the
     // user that their settings are about to change
     if (twConfig.projectName != '@auto') {
-        const response = await Enquirer.prompt<{continue: boolean}>({
+        const response = await Enquirer.prompt<{ continue: boolean }>({
             type: 'confirm',
             name: 'continue',
             message: 'This will convert your repository into a multi-project repository. Continue?',
@@ -30,7 +32,7 @@ export async function addProject(): Promise<void> {
         // If a project name wasn't previously specified, it must be now
         let projectName = twConfig.projectName;
         if (!twConfig.projectName) {
-            const response = await Enquirer.prompt<{projectName: string}>({
+            const response = await Enquirer.prompt<{ projectName: string }>({
                 type: 'input',
                 message: 'Enter the name of the existing project:',
                 name: 'projectName'
@@ -45,13 +47,13 @@ export async function addProject(): Promise<void> {
 
         // Copy the contents of the src folder into a subfolder with the current project name
         // First copy to a temporary folder, then clear out the contents of src
-        FS.cpSync(`${cwd}/src`, `${cwd}/tmp`, {recursive: true});
-        FS.rmSync(`${cwd}/src`, {recursive: true, force: true});
+        FS.cpSync(`${cwd}/src`, `${cwd}/tmp`, { recursive: true });
+        FS.rmSync(`${cwd}/src`, { recursive: true, force: true });
 
         // Then copy into the appropriate subfolder in src and clear the temporary folder
         TWProjectUtilities.ensurePath(`${cwd}/src/${projectName}/src`, cwd);
-        FS.cpSync(`${cwd}/tmp`, `${cwd}/src/${projectName}/src`, {recursive: true});
-        FS.rmSync(`${cwd}/tmp`, {recursive: true, force: true});
+        FS.cpSync(`${cwd}/tmp`, `${cwd}/src/${projectName}/src`, { recursive: true });
+        FS.rmSync(`${cwd}/tmp`, { recursive: true, force: true });
 
         // Create and save a default tsconfig.json file
         const tsConfig = JSON.stringify(tsConfigDefault(), undefined, 4);
@@ -65,7 +67,7 @@ export async function addProject(): Promise<void> {
     }
 
     // Ask for the name of the new project
-    const response = await Enquirer.prompt<{projectName: string}>({
+    const response = await Enquirer.prompt<{ projectName: string }>({
         type: 'input',
         message: 'Project name:',
         name: 'projectName'
@@ -75,14 +77,37 @@ export async function addProject(): Promise<void> {
 
     if (!name) throw new Error(`A project name must be provided.`);
 
+    // Also specify the type of project to create. Try to infer it from the command line arguments. If it's not provided, ask the user.
+    let projectType: undefined | TWProjectKind = args.includes('--xml') ? TWProjectKind.XML : args.includes('--ts') ? TWProjectKind.TypeScript : undefined;
+    // If a project name wasn't previously specified, it must be now
+    if (!projectType) {
+        const response = await Enquirer.prompt<{ projectType: 'TypeScript' | 'XML' }>({
+            type: 'select',
+            message: 'What type of project should be created?',
+            choices: [ 'TypeScript', 'XML'],
+            name: 'projectType'
+        });
+
+        projectType = response.projectType == 'TypeScript' ? TWProjectKind.TypeScript : TWProjectKind.XML;
+    }
+
     process.stdout.write(`\x1b[2m❯\x1b[0m Creating project "${name}"`);
 
     // Create a folder in the src directory for this project
     FS.mkdirSync(`${cwd}/src/${name}`);
 
-    // Add the default tsconfig file
-    const tsConfig = JSON.stringify(tsConfigDefault(), undefined, 4);
-    FS.writeFileSync(`${cwd}/src/${name}/tsconfig.json`, tsConfig);
+
+    if (projectType == TWProjectKind.TypeScript) {
+        // Add the default tsconfig file
+        const tsConfig = JSON.stringify(tsConfigDefault(), undefined, 4);
+        FS.writeFileSync(`${cwd}/src/${name}/tsconfig.json`, tsConfig);
+    } else if (projectType == TWProjectKind.XML) {
+        // Add a default twconfig file, indicating that it's an XML-only project
+        FS.writeFileSync(`${cwd}/src/${name}/twconfig.json`, JSON.stringify({ }, undefined, 4));
+    } else {
+        throw new Error(`Invalid project type: ${projectType}`);
+    }
+
 
     // Create a src directory for the project
     FS.mkdirSync(`${cwd}/src/${name}/src`);

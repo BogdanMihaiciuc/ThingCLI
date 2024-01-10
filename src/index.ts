@@ -137,11 +137,11 @@ Available commands:
  * \x1b[1mremove\x1b[0m [--merged] [--separate]
    Removes the thingworx extension
 
- * \x1b[1madd-project\x1b[0m
+ * \x1b[1madd-project\x1b[0m [--ts] [--xml]
    Adds a new project to the repository
 
- * \x1b[1mpull\x1b[0m [--projects]
-   Pulls xml projects from the thingworx server 
+ * \x1b[1mpull\x1b[0m [--projects] [--ts] [--xml]
+   Pulls projects from the thingworx server, in the specified format
 
  * \x1b[1mgenerate-api\x1b[0m
    EXPERIMENTAL: Builds declarations out of exported entities that can be used in other projects
