@@ -1,7 +1,7 @@
 import Enquirer from 'enquirer';
 import * as FS from 'fs';
 import { spawn } from 'child_process';
-import { twConfigDefault, twConfigMethodHelperDefaults } from './init';
+import { TWConfigDefault, TWConfigMethodHelperDefaults } from './init';
 
 /**
  * An array containing the files that need to be removed in order to upgrade.
@@ -75,27 +75,27 @@ export async function upgrade() {
         const currentTwConfig = JSON.parse(FS.readFileSync(`${cwd}/twconfig.json`, 'utf-8'));
         // Add the method helpers options
         if(!currentTwConfig.methodHelpers) {
-            currentTwConfig.methodHelpers = twConfigMethodHelperDefaults();
+            currentTwConfig.methodHelpers = TWConfigMethodHelperDefaults();
         }
         FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(currentTwConfig, undefined, 4));
     }
 
     // Add the new thingworx types directories to tsconfig
-    const tsConfig = require(`${cwd}/tsconfig.json`);
+    const TSConfig = require(`${cwd}/tsconfig.json`);
 
     // Add the tw_imports directory if it didn't exist
-    if (!tsConfig.include.includes('./tw_imports/**/*.d.ts')) {
-        tsConfig.include.push('./tw_imports/**/*.d.ts');
+    if (!TSConfig.include.includes('./tw_imports/**/*.d.ts')) {
+        TSConfig.include.push('./tw_imports/**/*.d.ts');
     }
 
     // Add the new dependencies from thing transformer
-    tsConfig.include.push(
+    TSConfig.include.push(
         "./node_modules/bm-thing-transformer/static/**/*.d.ts",
         "./node_modules/bm-thing-cli/node_modules/bm-thing-transformer/static/**/*.d.ts"
     );
 
     // Add the required UI JSX properties
-    Object.assign(tsConfig.compilerOptions, {
+    Object.assign(TSConfig.compilerOptions, {
         jsx: "react",
         jsxFactory: "defineWidget",
         jsxFragmentFactory: "defineWidget",
@@ -103,7 +103,7 @@ export async function upgrade() {
         moduleResolution: "Node",
     });
 
-    FS.writeFileSync(`${cwd}/tsconfig.json`, JSON.stringify(tsConfig, undefined, 4));
+    FS.writeFileSync(`${cwd}/tsconfig.json`, JSON.stringify(TSConfig, undefined, 4));
 
     // Remove the gulpfile, since building is now handled by bm-thing-cli
     FS.rmSync(`${cwd}/gulpfile.js`);
@@ -113,7 +113,7 @@ export async function upgrade() {
 
     // If a twconfig file was not used, create it
     if (projectName) {
-        FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfigDefault(projectName.projectName), undefined, 4));
+        FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(TWConfigDefault(projectName.projectName), undefined, 4));
     }
 
     // Update the build commands in package json, unless they have been modified

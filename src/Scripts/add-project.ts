@@ -12,11 +12,11 @@ export async function addProject(): Promise<void> {
     const cwd = process.cwd();
 
     // Load the twconfig file which contains the project configuration.
-    const twConfig = require(`${cwd}/twconfig.json`) as TWConfig;
+    const TWConfig = require(`${cwd}/twconfig.json`) as TWConfig;
 
     // If the repository is configured for a single project only warn the
     // user that their settings are about to change
-    if (twConfig.projectName != '@auto') {
+    if (TWConfig.projectName != '@auto') {
         const response = await Enquirer.prompt<{continue: boolean}>({
             type: 'confirm',
             name: 'continue',
@@ -28,8 +28,8 @@ export async function addProject(): Promise<void> {
         if (!response.continue) return;
 
         // If a project name wasn't previously specified, it must be now
-        let projectName = twConfig.projectName;
-        if (!twConfig.projectName) {
+        let projectName = TWConfig.projectName;
+        if (!TWConfig.projectName) {
             const response = await Enquirer.prompt<{projectName: string}>({
                 type: 'input',
                 message: 'Enter the name of the existing project:',
@@ -54,12 +54,12 @@ export async function addProject(): Promise<void> {
         FS.rmSync(`${cwd}/tmp`, {recursive: true, force: true});
 
         // Create and save a default tsconfig.json file
-        const tsConfig = JSON.stringify(tsConfigDefault(), undefined, 4);
-        FS.writeFileSync(`${cwd}/src/${projectName}/tsconfig.json`, tsConfig);
+        const TSConfig = JSON.stringify(TSConfigDefault(), undefined, 4);
+        FS.writeFileSync(`${cwd}/src/${projectName}/tsconfig.json`, TSConfig);
 
         // Set the twconfig project name to '@auto' then save it
-        twConfig.projectName = '@auto';
-        FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(twConfig, undefined, 4));
+        TWConfig.projectName = '@auto';
+        FS.writeFileSync(`${cwd}/twconfig.json`, JSON.stringify(TWConfig, undefined, 4));
 
         process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Converted to multi-project   \n`);
     }
@@ -81,8 +81,8 @@ export async function addProject(): Promise<void> {
     FS.mkdirSync(`${cwd}/src/${name}`);
 
     // Add the default tsconfig file
-    const tsConfig = JSON.stringify(tsConfigDefault(), undefined, 4);
-    FS.writeFileSync(`${cwd}/src/${name}/tsconfig.json`, tsConfig);
+    const TSConfig = JSON.stringify(TSConfigDefault(), undefined, 4);
+    FS.writeFileSync(`${cwd}/src/${name}/tsconfig.json`, TSConfig);
 
     // Create a src directory for the project
     FS.mkdirSync(`${cwd}/src/${name}/src`);
@@ -94,7 +94,7 @@ export async function addProject(): Promise<void> {
  * Returns a default tsconfig.json file to be used for new project.
  * @returns         An object that can be written to a tsconfig.json file.
  */
-function tsConfigDefault() {
+function TSConfigDefault() {
     return {
         compilerOptions: {
             outDir: "./dist/",
