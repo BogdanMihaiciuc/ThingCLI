@@ -15,6 +15,7 @@ import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
 import { generateAPI } from './Scripts/generate-api';
 import { pull } from './Scripts/pull';
+import { help } from './Scripts/help';
 import * as fs from 'fs';
 import 'dotenv/config';
 
@@ -103,6 +104,12 @@ async function main() {
         case Commands.pull:
             await pull();
             break;
+        case Commands.help:
+            // If used without an argument, just display the generic information
+            if (args.length) {
+                await help();
+            }
+            break;
         default:
             console.error(`Unknown command "${command}" specified.`);
     }
@@ -118,6 +125,9 @@ else {
     const pkg = require('../package.json');
     console.log(`ThingCLI version ${pkg.version} usage:
 twc <command> [--argument] ...
+
+To get help on a specific command run:
+twc help <command>
 
 Available commands:
  * \x1b[1mdeclarations\x1b[0m
@@ -147,10 +157,10 @@ Available commands:
  * \x1b[1minstall-widgets\x1b[0m <file>
    Pulls widget types from the specified file to be used in mashups.
 
- * \x1b[1madd-project\x1b[0m
+ * \x1b[1madd-project\x1b[0m [--ui]
    Adds a new project to the repository
 
- * \x1b[1mpull\x1b[0m [--projects]
+ * \x1b[1mpull\x1b[0m --xml [--projects]
    Pulls xml projects from the thingworx server 
 
  * \x1b[1mgenerate-api\x1b[0m
@@ -160,6 +170,9 @@ Available commands:
    Initializes a thingworx project in an empty folder
    
  * \x1b[1mupgrade\x1b[0m
-   Upgrades from a gulp project to a twc project`);
+   Upgrades from a gulp project to a twc project
+   
+ * \x1b[1mhelp\x1b[0m <command>
+   Prints out information about the specified command`);
 }
 

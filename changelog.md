@@ -1,5 +1,7 @@
 # 2.0.0
 
+Adds a new `help` command that can be used to obtain more information about what other commands do or how they are used.
+
 Adds support for loading UIPlugins specified in a `twconfig.json` file.
 
 Adds a new `install-widgets` command that can be used to install widget typings and defaults to be used in mashups.

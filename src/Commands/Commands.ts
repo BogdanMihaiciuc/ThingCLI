@@ -78,4 +78,9 @@ export const enum Commands {
      * The install-widgets command that pulls the declaration of widget types from the thingworx server.
      */
     installWidgets = 'install-widgets',
+
+    /**
+     * The help command displays information about a command.
+     */
+    help = 'help',
 }
