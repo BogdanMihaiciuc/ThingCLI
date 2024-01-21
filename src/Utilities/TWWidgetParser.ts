@@ -299,14 +299,17 @@ export class TWWidgetParser {
             const constuctorProperties = this.constructorPropertiesWithWidgetProperties(widget, genericArgumentMap, name);
 
             definition += `
+/** The properties and events that can be set or bound on the ${JSON.stringify(name)} widget. */
 declare interface UIInputInterface${name}${genericArgs} extends UIBaseInputInterface {
     ${constuctorProperties.propertyTypes.join(';\n\n')}
 }
 
+/** The binding source properties and services that can be bound on the ${JSON.stringify(name)} widget. */
 declare class UIOutputInterface${name}${genericArgs} {
     ${this.classPropertiesWithWidgetProperties(widget, genericArgumentMap)}
 }
 
+/** ${widget.description ?? ''} */
 declare function ${name}${genericArgs}(props: UIInputInterface${name}${genericArgs}): UIOutputInterface${name}${genericArgs}
 
             `;
