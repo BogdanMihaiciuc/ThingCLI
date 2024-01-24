@@ -102,7 +102,7 @@ export async function help() {
 
     // Always print out information about syntax
     console.log(`For information about the project types and features see the handbook at:
-TBD\n`);
+TBD`);
 
     switch (command as Commands) {
         case Commands.declarations:
@@ -293,12 +293,13 @@ entities are not associated to any extension.
 
 The following arguments can be specified for this command:
  • \x1b[1mmerged\x1b[0m           Must be used in a multi-project repository if the
-                   extension was built using this argument.
+                    extension was built using this argument.
 
  • \x1b[1mseparate\x1b[0m         Must be used in a multi-project repository if the
-                   extension was built using this argument. This is the default
-                   behaviour if no argument is used.
-`);
+                    extension was built using this argument. This is the default
+                    behaviour if no argument is used.
+
+                   `);
             break;
         case Commands.install:
             console.log(`
@@ -337,6 +338,98 @@ the widget extensions installed for the mashups referencing them to function.
 
 These declarations are saved in a \x1b[1mui-static\x1b[0m folder at the root of the
 repository folder.`);
+            break;
+        case Commands.addProject:
+            console.log(`
+\x1b[1madd-prooject\x1b[0m - adds a new project to the repository, converting it into a
+multi-project repository if it wasn't already.
+
+Usage:
+twc add-project [--ui]
+
+Adds a new project to the repository. If the repository is not in multi-project
+mode, you will first have to confirm you want to convert it to multi-project.
+Confirming will reorganize the \x1b[1msrc\x1b[0m folder.
+
+The following arguments can be specified for this command:
+ • \x1b[1mui\x1b[0m               If specified, causes the newly created project to be
+                    a UI only project. These projects compile to the current ES
+                    version rather than ES5 so backend services might not work
+                    if you include them in these kinds of projects.
+
+`);
+            break;
+        case Commands.pull:
+            console.log(`
+\x1b[1mpullt\x1b[0m - pulls XML entities from the server for XML projects.
+
+Usage:
+twc pull --xml [--projects]
+
+Pulls all entities in all XML-only projects from the server specified in either
+the .env file or twconfig.json. These are the entities in the projects having
+the same name as the local XML-only project names. Typescript projects are
+ignored by this command.
+
+This does not keep track or attempt to sync the local projects to the one on
+the server - any local entities that have been deleted on the server will not
+be removed.
+
+The following arguments can be specified for this command:
+ • \x1b[1mxml\x1b[0m              At least one format argument must be specified.
+                    Specifies that the entities should be pulled in XML format.
+                    No other formats are currently supported, so this argument
+                    is required.
+
+${SharedArgumentProjects}
+`);
+            break;
+        case Commands.init:
+            console.log(`
+\x1b[1minit\x1b[0m - Should be run in an empty folder to initialize a new project.
+
+Usage:
+twc init
+
+Initializes a new empty project in the folder where this command is run. This
+takes no arguments, but instead asks for the project details afterwards.
+
+After filling out the details requested the folder will contain an empty project
+with all configuration files and dependencies, but no source files.
+`);
+            break;
+        case Commands.upgrade:
+            console.log(`
+\x1b[1mupgrade\x1b[0m - Upgrades a project from the old gulp-based build system to \x1b[1mtwc\x1b[0m.
+
+Usage:
+twc upgrade
+
+Upgrades a project from the old gulp-based build system to twc. This doesn't
+upgrade between different twc versions as these are meant to be backwards
+compatible.
+
+This has no effect when run anywhere other than an old gulp-based project.
+`);
+            break;
+        case Commands.generateAPI:
+            console.log(`
+\x1b[1mgenerate-api\x1b[0m - 🔶 \x1b[1mEXPERIMENTAL:\x1b[0m creates declaration files that can
+be used to reference the project's entities outside of Thingworx.
+
+Usage:
+twc generate-api
+
+Creates the following two files:
+ • \x1b[1mapi/Generated.d.ts\x1b[0m - contains the declarations of the entites
+ • \x1b[1mapi/Runtime.d.ts\x1b[0m - contains the declaration of data shape types
+
+Only entities marked with the \x1b[1m@exported\x1b[0m decorator are included in these
+declarations.
+
+🔶 \x1b[1mEXPERIMENTAL: The format of the declarations file is not finalized and
+might change in a future version.\x1b[0m
+`);
             break;
     }
 }
