@@ -333,6 +333,7 @@ declare function ${name}${genericArgs}(props: UIInputInterface${name}${genericAr
         for (let [name, property] of Object.entries(widget.properties)) {
 
             // Escape all property names, because they can contain non-identifier characters (e.g. Z-Index)
+            const originalName = name;
             name = JSON.stringify(name);
 
             // Services can't be specified as constructor properties; they are only specified as binding targets for other events
@@ -357,10 +358,10 @@ declare function ${name}${genericArgs}(props: UIInputInterface${name}${genericAr
                         }
 
                         // The infotable type depends on whether there is a generic argument associated with it
-                        if (genericArgumentMap[name]) {
+                        if (genericArgumentMap[originalName]) {
                             propertyTypes.push(`
     /** ${property.description || ''} */ 
-    ${name}?: BindingTarget<INFOTABLE<${genericArgumentMap[name]}>>`);
+    ${name}?: BindingTarget<INFOTABLE<${genericArgumentMap[originalName]}>>`);
                         }
                         else {
                             propertyTypes.push(`
