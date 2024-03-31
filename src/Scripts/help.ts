@@ -100,10 +100,6 @@ const SharedArgumentRetainVersion =
  */
 export async function help() {
 
-    // Always print out information about syntax
-    console.log(`For information about the project types and features see the handbook at:
-TBD`);
-
     switch (command as Commands) {
         case Commands.declarations:
             console.log(`
@@ -331,6 +327,12 @@ Creates a type declarations file and a defaults file for the widgets in the
 specified file. The file must contain the output of the widget export extension
 ran in a Thingworx environment that contains the widgets for which the
 declarations should be generated.
+
+The widget export extension can be downloaded from:
+https://github.com/BogdanMihaiciuc/ThingCLI/releases/tag/2.0.0
+When installed, it adds a new "Export Widgets" button to the mashup builder
+toolbar that will download a definitions file containing all non-standard
+widgets available on that server.
 
 Note that the declarations only allow you to reference these widgets in mashup
 files, but the environments on which the project is installed must still have
