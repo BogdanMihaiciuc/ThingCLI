@@ -4,7 +4,7 @@ Adds a new `help` command that can be used to obtain more information about what
 
 Adds support for loading UIPlugins specified in a `twconfig.json` file. UIPlugins are transformer extensions that can customize the output of widgets. Transformers will invoke methods on UIPlugins at several points while processing mashup files. UIPlugins have access to the widget's properties as well as any other data exposed by the transformer and are primarily meant to ensure consistency for widgets that contain hidden properties that are derived from other properties (e.g. navigation widgets contain an additional hidden property containing the parameter definitions for the mashup that was selected as the target).
 
-Adds a new `install-widgets` command that can be used to install widget typings and defaults to be used in mashups. This command requires, as an argument, a definitions file that was download from a Thingworx server using [ThingCLIWidgetDefinitionDownloader]().
+Adds a new `install-widgets` command that can be used to install widget typings and defaults to be used in mashups. This command requires, as an argument, a definitions file that was download from a Thingworx server using [ThingCLIWidgetDefinitionDownloader](https://github.com/BogdanMihaiciuc/ThingCLI/releases/tag/2.0.0).
 
 Updates to transformer 2.0.0 which adds support for mashups, style definitions, state definitions, CSS and core ui mashups.
 
