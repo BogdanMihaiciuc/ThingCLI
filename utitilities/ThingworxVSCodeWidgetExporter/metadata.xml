@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Entities>
+  <ExtensionPackages>
+    <ExtensionPackage name="BMThingCLIWidgetDefinitionDownloader" packageVersion="2.0.0" description="Extracts information about the installed widgets from the server." vendor="Bogdan Mihaiciuc" minimumThingWorxVersion="6.0.0" buildNumber="1"/>
+  </ExtensionPackages>
+  <Widgets>
+    <Widget name="BMThingCLIWidgetDefinitionDownloader">
+      <UIResources>
+        <FileResource type="JS" file="UIDefinitionProvider.js" description="" isDevelopment="true" isRuntime="false"/>
+      </UIResources>
+    </Widget>
+  </Widgets>
+</Entities>
