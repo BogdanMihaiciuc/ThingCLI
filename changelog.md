@@ -1,3 +1,7 @@
+# 2.0.1
+
+Updates to transformer 2.0.1 which fixes a bug where certain global functions were not properly copied over into services.
+
 # 2.0.0
 
 Adds a new `help` command that can be used to obtain more information about what other commands do or how they are used.
