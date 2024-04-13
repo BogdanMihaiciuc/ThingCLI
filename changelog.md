@@ -1,3 +1,9 @@
+# 2.0.2
+
+Updates to transformer 2.0.2 which fixes a bug where enums were not properly inlined when referenced in certain global functions.
+
+Updates the typings for the `DisableSubscription` and `EnableSubscription` to support the new signatures in Thingworx 9. ([kklorenzotesta](https://github.com/kklorenzotesta))
+
 # 2.0.1
 
 Updates to transformer 2.0.1 which fixes a bug where certain global functions were not properly copied over into services.
