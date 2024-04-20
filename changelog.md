@@ -1,3 +1,9 @@
+# 2.1
+
+Updates to transformer 2.1 and typescript 5. ([stefan-lacatus](https://github.com/stefan-lacatus))
+
+Resolves an issue where commands couldn't be interrupted while a progress bar was displayed. ([stefan-lacatus](https://github.com/stefan-lacatus))
+
 # 2.0.2
 
 Updates to transformer 2.0.2 which fixes a bug where enums were not properly inlined when referenced in certain global functions.
