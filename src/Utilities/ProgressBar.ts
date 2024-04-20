@@ -54,22 +54,16 @@ export class ProgressBar {
     private _normalizedProgress: number = 0;
 
     /**
-     * A callback that is invoked on SIGINT while the progress bar is running.
-     * Reenables the cursor.
+     * A buffer containing the messages that should be displayed below the
+     * progress bar.
      */
-    private _sigintHandler = () => {
-        process.stdout.write('\u001B[?25h');
-        process.exit();
-    };
+    private loggingBuffer: string[] = [];
 
     /**
      * Draws the progress bar. Until invoking `stop`, you should not write to stdout.
      */
     start() {
         this._render();
-
-        // Reenable the cursor if the process stops
-        process.on('SIGINT', this._sigintHandler);
     }
 
     /**
@@ -86,6 +80,18 @@ export class ProgressBar {
      * Renders this progress bar at the current cursor position.
      */
     private _render() {
+        // content within logging buffer ?
+        if (this.loggingBuffer.length > 0) {
+            readline.clearLine(process.stdout, 0);
+
+            // flush logging buffer and write content to terminal
+            while (this.loggingBuffer.length > 0) {
+                const message = this.loggingBuffer.shift();
+                if (message) {
+                    process.stdout.write(message + '\n');
+                }
+            }
+        }
         // Draw the beginning of the bar
         process.stdout.write(StartSymbol);
 
@@ -110,7 +116,7 @@ export class ProgressBar {
         }
 
         // Close the bar and draw the message, then hide the cursor
-        process.stdout.write(`${EndSymbol} | ${(this._progress * 100) | 0}%\n\x1b[2m${this._message}\x1b[0m\u001B[?25l`);
+        process.stdout.write(`${EndSymbol} | ${(this._progress * 100) | 0}%\n\x1b[2m${this._message}\x1b[0m`);
     }
 
     /**
@@ -129,23 +135,28 @@ export class ProgressBar {
     }
 
     /**
-     * Moves the cursor to the next line.
+     * Stops the progress bar, moves the cursor to the next line and shows it.
      */
     stop() {
-        process.stdout.write('\n\u001B[?25h');
-
-        process.off('SIGINT', this._sigintHandler);
+        process.stdout.write('\n');
     }
 
     /**
      * Clears the progress bar and moves the cursor back to where the progress
      * bar started.
      */
-    destroy() {
+    destroy = () => {
+        this.stop();
         this._clear();
-        process.stdout.write('\n\u001B[?25h');
+    }
 
-        process.off('SIGINT', this._sigintHandler);
+    /**
+     * Logs a message to the console, that appears above the progress bar.
+     * @param message String to log 
+     */
+    log(message: string) {
+        // push content into logging buffer
+        this.loggingBuffer.push(message);
     }
 
 }
