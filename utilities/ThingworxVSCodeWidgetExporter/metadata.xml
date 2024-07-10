@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Entities>
   <ExtensionPackages>
-    <ExtensionPackage name="BMThingCLIWidgetDefinitionDownloader" packageVersion="2.1.0" description="Extracts information about the installed widgets from the server." vendor="Bogdan Mihaiciuc" minimumThingWorxVersion="6.0.0" buildNumber="1"/>
+    <ExtensionPackage name="BMThingCLIWidgetDefinitionDownloader" packageVersion="2.1.1" description="Extracts information about the installed widgets from the server." vendor="Bogdan Mihaiciuc" minimumThingWorxVersion="6.0.0" buildNumber="1"/>
   </ExtensionPackages>
   <Widgets>
     <Widget name="BMThingCLIWidgetDefinitionDownloader">
