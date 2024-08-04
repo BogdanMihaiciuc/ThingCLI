@@ -1,3 +1,7 @@
+# 2.1.6
+
+Updates to transformer 2.1.6 which resolves issues with binding to and from mashup parameters and `Navigationfunction` parameters.
+
 # 2.1.5
 
 Updates to transformer 2.1.5 which adds support for visibility permissions in mashups and fixes emitted arrow functions to properly alias `this`. ([kklorenzotesta](https://github.com/kklorenzotesta))
