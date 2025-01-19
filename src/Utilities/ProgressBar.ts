@@ -73,6 +73,8 @@ export class ProgressBar {
         readline.clearLine(process.stdout, -1);
         readline.moveCursor(process.stdout, 0, -1);
         readline.clearLine(process.stdout, 1);
+        readline.moveCursor(process.stdout, 0, -1);
+        readline.clearLine(process.stdout, 1);
         process.stdout.write('\r');
     }
 
@@ -116,7 +118,7 @@ export class ProgressBar {
         }
 
         // Close the bar and draw the message, then hide the cursor
-        process.stdout.write(`${EndSymbol} | ${(this._progress * 100) | 0}%\n\x1b[2m${this._message}\x1b[0m`);
+        process.stdout.write(`${EndSymbol} | ${(this._progress * 100) | 0}%\n\x1b[2m${this._message}\x1b[0m\n`);
     }
 
     /**
