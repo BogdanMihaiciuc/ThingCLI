@@ -1,3 +1,9 @@
+# 2.1.7
+
+Updates to transformer 2.1.7 which resolves an issue where binding could require type assertions and an issue where core ui controllers could not bind their infotable properties to other widgets.
+
+When building progress, the progress bar cursor will now appear on a separate line instead of flashing at the end of the current file name.
+
 # 2.1.6
 
 Updates to transformer 2.1.6 which resolves issues with binding to and from mashup parameters and `Navigationfunction` parameters.
