@@ -1,6 +1,6 @@
 {
     "name": "bm-thing-cli",
-    "version": "2.1.6",
+    "version": "2.1.7",
     "description": "Command line tools for the Thingworx VSCode Project",
     "bin": {
         "twc": "dist/index.js"
@@ -30,7 +30,7 @@
     },
     "dependencies": {
         "adm-zip": "0.5.10",
-        "bm-thing-transformer": "2.1.6",
+        "bm-thing-transformer": "2.1.7",
         "dotenv": "^16.0.0",
         "enquirer": "^2.3.6",
         "typescript": "5.4.5",
