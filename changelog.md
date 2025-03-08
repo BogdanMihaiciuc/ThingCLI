@@ -1,3 +1,7 @@
+# 2.1.8
+
+Updates to transformer 2.1.8 which resolves an issue where trailing comments after methods could cause invalid code to be generated for thingworx.
+
 # 2.1.7
 
 Updates to transformer 2.1.7 which resolves an issue where binding could require type assertions and an issue where core ui controllers could not bind their infotable properties to other widgets.
