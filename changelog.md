@@ -4,6 +4,8 @@ Adds the ability to upload files to repositories as part of the `upload`, `push`
 
 Updates to transformer 2.2.0 which adds the ability to define media entities, default values for infotable fields and binding expressions in core ui mashups.
 
+Adds support for including resource entities in extension packages. ([stefan-lacatus](https://github.com/stefan-lacatus))
+
 # 2.1.8
 
 Updates to transformer 2.1.8 which resolves an issue where trailing comments after methods could cause invalid code to be generated for thingworx.
