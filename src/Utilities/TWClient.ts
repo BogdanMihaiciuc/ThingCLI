@@ -440,6 +440,35 @@ export class TWClient {
     }
 
     /**
+     * Deletes the specified remote folder in a ThingWorx file repository.
+     * @param fileRepository    Name of the FileRepository from which the folder should be deleted.
+     * @param targetFile        Remote path to the folder to be deleted.
+     * @returns                 A promise that resolves with the server response when
+     *                          the operation finishes.
+     */
+    static async deleteRemoteFile(fileRepository: string, targetFile: string): Promise<TWClientResponse> {
+        const url = `Things/${fileRepository}/Services/DeleteFile`;
+        try {
+            const response = await this._performRequest({
+                url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    path: targetFile,
+                },
+            });
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+            return response;
+        }
+        catch (err) {
+            throw new Error(`Error executing remote folder delete because: ${err}`);
+        }
+    }
+
+    /**
      * Execute a source control export of the specified project.
      * @param project           The name of the Thingworx project to export.
      * @param fileRepository    Name of the FileRepository where the export will be saved.
