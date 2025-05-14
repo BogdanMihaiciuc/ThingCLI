@@ -380,7 +380,7 @@ async function getExtension(name: string, slice: number, installProgress: Instal
     }
     else {
         // Otherwise, each entity has to be loaded separately
-        const entitiesToLoad = packageDetails.rows.filter(row => (row.parentName != 'Resources' && row.parentName != 'ThingPackages' && row.parentName != 'Widgets'));
+        const entitiesToLoad = packageDetails.rows.filter(row => (!(row.parentName == 'Resources' && row.name.endsWith('.jar')) && row.parentName != 'ThingPackages' && row.parentName != 'Widgets'));
         const entitySlice = slice / (entitiesToLoad.length + 1);
         installProgress.progress += entitySlice;
 
