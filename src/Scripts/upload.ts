@@ -57,6 +57,8 @@ export async function upload(push: boolean = false): Promise<void> {
         FS.rmSync(Path.join(cwd, 'zip', 'extensions.zip'));
     }
 
+    const repositoryNames: Record<string, string> = {};
+
     if (isSeparate && twConfig.projectName == '@auto') {
         // In separate mode, it is necessary to upload the projects in dependency order
         for (const project of TWProjectUtilities.dependencySortedProjects().reverse()) {
@@ -66,6 +68,7 @@ export async function upload(push: boolean = false): Promise<void> {
             }
 
             const zipName = `${packageJSON.name}-${project.name}-${packageJSON.version}.zip`;
+
             // Import either as an extension or a source control entities
             if (project.kind == TWProjectKind.XML && push) {
                 await uploadSourceControlledZip(`${cwd}/zip/projects/`, zipName, project.name);
@@ -73,13 +76,68 @@ export async function upload(push: boolean = false): Promise<void> {
             else {
                 await uploadExtension(`${cwd}/zip/projects/${zipName}`, project.name);
             }
+
+            // Discover the repository folders for each project
+            if (twConfig.repositoryPath) {
+                const repositoryPath = Path.resolve(project.path, twConfig.repositoryPath);
+                if (FS.existsSync(repositoryPath)) {
+                    // Enumerate all folders and add them to the repository names
+                    const folders = FS.readdirSync(repositoryPath, {withFileTypes: true}).filter(d => d.isDirectory());
+                    for (const folder of folders) {
+                        repositoryNames[folder.name] = folder.name;
+                    }
+                }
+            }
         };
     }
     else {
         // In merged mode, just upload the resulting zip as extension
         const zipName = `${packageJSON.name}-${packageJSON.version}.zip`;
         await uploadExtension(`${cwd}/zip/${zipName}`);
+
+        // Discover the repository folders
+        if (twConfig.repositoryPath) {
+            const repositoryPath = Path.resolve(cwd, twConfig.repositoryPath);
+            if (FS.existsSync(repositoryPath)) {
+                // Enumerate all folders and add them to the repository names
+                const folders = FS.readdirSync(repositoryPath, {withFileTypes: true}).filter(d => d.isDirectory());
+                for (const folder of folders) {
+                    repositoryNames[folder.name] = folder.name;
+                }
+            }
+        }
     }
+
+    // Upload the repository files to thingworx
+    for (const repository in repositoryNames) {
+        await uploadRepositoryFiles(`${cwd}/zip`, `files-${repository}-${packageJSON.version}.zip`, repository);
+    }
+}
+
+/**
+ * Uploads the repository files in the specified zip archive to the specified repository.
+ * @param path              The folder containing the zip file.
+ * @param zip               The name of the zip file.
+ * @param repository        The repository to which the zip file should be uploaded.
+ */
+async function uploadRepositoryFiles(path: string, zip: string, repository: string): Promise<void> {
+    process.stdout.write(`\x1b[2m❯\x1b[0m Uploading files to repository ${repository} in ${TWClient.server}`);
+
+    try {
+        // step 1: upload the file to Thingworx
+        await TWClient.uploadFile(path, zip, repository, '/');
+        // step 2: extract the uploaded file into a folder on the twx repository
+        await TWClient.unzipAndExtractRemote(repository, `/${zip}`, `/`);
+        // step 3: delete the zip archive
+        await TWClient.deleteRemoteFile(repository, `/${zip}`);
+    }
+    catch (e) {
+        process.stdout.write(`\r\x1b[1;31m✖\x1b[0m Unable to upload files to repository ${repository} in ${TWClient.server}\n`);
+        throw new Error(`\x1b[1;31mFailed to upload files to thingworx file repository ${repository}\x1b[0m
+${e}`);
+    }
+
+    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Uploaded files to repository ${repository} in ${TWClient.server}   \n`);
 }
 
 /**

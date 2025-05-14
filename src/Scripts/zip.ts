@@ -1,5 +1,6 @@
 import { TWConfig } from 'bm-thing-transformer';
 import * as FS from 'fs';
+import * as Path from 'path';
 import AdmZip from 'adm-zip';
 import { TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 
@@ -70,6 +71,19 @@ export async function zip(): Promise<void> {
             const zipName = `${packageJSON.name}-${p.name}-${packageJSON.version}.zip`;
             const path = `${cwd}/build/${p.name}`;
             await zipPath(zipName, path, baseOutPath);
+
+            // If repositories are enabled, copy each project's repositories into the zip path
+            if (twConfig.repositoryPath) {
+                const repositoryPath = Path.resolve(p.path, twConfig.repositoryPath);
+                if (FS.existsSync(repositoryPath)) {
+                    // Enumerate all repositories and copy them to the zip folder
+                    const folders = FS.readdirSync(repositoryPath, {withFileTypes: true}).filter(d => d.isDirectory());
+
+                    for (const folder of folders) {
+                        FS.cpSync(Path.join(folder.parentPath, folder.name), `${cwd}/zip/repository/${folder.name}`, {recursive: true, force: true});
+                    }
+                }
+            }
         }
 
         // At the end of the build command, create a zip with each package and delete the temporary folder
@@ -78,12 +92,39 @@ export async function zip(): Promise<void> {
             await zipPath(zipName, baseOutPath, `${cwd}/zip`);
             FS.rmSync(baseOutPath, {recursive: true, force: true});
         }
+
+        // If repositories are enabled, create a zip for each repository thing
+        if (twConfig.repositoryPath) {
+            const repositories = `${cwd}/zip/repository`;
+            if (FS.existsSync(repositories)) {
+                const folders = FS.readdirSync(repositories, {withFileTypes: true}).filter(d => d.isDirectory());
+
+                for (const folder of folders) {
+                    await zipPath(`files-${folder.name}-${packageJSON.version}.zip`, Path.join(folder.parentPath, folder.name), `${cwd}/zip`);
+                }
+            }
+
+            FS.rmSync(repositories, {recursive: true, force: true});
+        }
     }
     else {
         // If running in single project mode, run against the whole build directory
         const outPath = `${cwd}/zip`;
 
         await zipPath(zipName, `${cwd}/build`, outPath);
+        
+        // If repositories are enabled, create a zip for each repository thing
+        if (twConfig.repositoryPath) {
+            const repositoryPath = Path.resolve(cwd, twConfig.repositoryPath);
+            if (FS.existsSync(repositoryPath)) {
+                // Enumerate all repositories and copy them to the zip folder
+                const folders = FS.readdirSync(repositoryPath, {withFileTypes: true}).filter(d => d.isDirectory());
+
+                for (const folder of folders) {
+                    await zipPath(`files-${folder.name}-${packageJSON.version}.zip`, Path.join(folder.parentPath, folder.name), `${cwd}/zip`);
+                }
+            }
+        }
     }
 
     process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Created extension \x1b[2mzip/${zipName}\x1b[0m\n`);

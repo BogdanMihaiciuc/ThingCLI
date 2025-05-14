@@ -30,8 +30,9 @@ async function main() {
             break;
         case Commands.watch:
             let declarationsRunning = false;
-            fs.watch(`${process.cwd()}/src`, {recursive: true}, async (event: fs.WatchEventType, filename: string) => {
+            fs.watch(`${process.cwd()}/src`, {recursive: true}, async (event: fs.WatchEventType, filename: string | null) => {
                 if (declarationsRunning) return;
+                if (!filename) return;
 
                 // Don't process this if it's a change to the static directory, which is generated
                 // by the declarations command
