@@ -23,9 +23,15 @@ export enum TWProjectKind {
 export interface TWProject {
 
     /**
-     * The project's name.
+     * The project's name (folder name).
      */
     name: string;
+
+    /**
+     * The TWX project names this folder represents. For most projects this is just [name],
+     * but for multi-project folders it can list several TWX project names.
+     */
+    projectNames: string[];
 
     /**
      * The path to the project's root folder.
@@ -107,10 +113,15 @@ export class TWProjectUtilities {
             if (fs.lstatSync(path).isDirectory()) {
                 if(fs.existsSync(`${path}/tsconfig.json`)) {
                     // If a tsconfig.json file is found, then the project contains typescript entities
-                    projects.push({name: projectName, path, kind: TWProjectKind.TypeScript});
+                    projects.push({name: projectName, projectNames: [projectName], path, kind: TWProjectKind.TypeScript});
                 } else if(fs.existsSync(`${path}/twconfig.json`)) {
                     // If only a twconfig.json is found, then assume it's XML only
-                    projects.push({name: projectName, path, kind: TWProjectKind.XML});
+                    // The twconfig.json may specify multiple TWX project names via a "projects" array
+                    const folderTwConfig = JSON.parse(fs.readFileSync(`${path}/twconfig.json`, 'utf8') || '{}');
+                    const projectNames: string[] = Array.isArray(folderTwConfig.projects) && folderTwConfig.projects.length > 0
+                        ? folderTwConfig.projects
+                        : [projectName];
+                    projects.push({name: projectName, projectNames, path, kind: TWProjectKind.XML});
                 }
             }
         }

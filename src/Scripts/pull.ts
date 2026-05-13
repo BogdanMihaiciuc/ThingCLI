@@ -30,7 +30,9 @@ export async function pull(): Promise<void> {
             }
 
             if (project.kind == TWProjectKind.XML) {
-                pullProjectToFolder(Path.join(project.path, 'src'), project.name);
+                for (const projectName of project.projectNames) {
+                    await pullProjectToFolder(Path.join(project.path, 'src'), projectName);
+                }
             }
         };
     }
