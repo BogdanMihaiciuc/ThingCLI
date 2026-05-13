@@ -1,3 +1,7 @@
+# 2.3.0
+
+Adds support for multi-project XML folders. A `twconfig.json` in an XML project folder can now specify a `projects` array listing multiple ThingWorx project names that the folder represents. When pulling, all listed projects are fetched and their entities merged into the same `src` directory. When pushing, the folder contents are uploaded as before. Folders without a `projects` array continue to use the folder name as the single project name.
+
 # 2.2.0
 
 Adds the ability to upload files to repositories as part of the `upload`, `push` and `deploy` commands. This requires a `repositoryPath` property to be specified in the `twconfig.json` file. Additionally, when building projects, the `zip` folder will contain an additional zip file for each repository in all projects that were built.
