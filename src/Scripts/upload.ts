@@ -2,7 +2,7 @@ import * as FS from 'fs';
 import * as Path from 'path';
 import readline from 'readline';
 import { TWConfig, TWPropertyDataChangeKind } from 'bm-thing-transformer';
-import { TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
+import { TWDataConfig, TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
 
@@ -28,6 +28,7 @@ export async function upload(push: boolean = false): Promise<void> {
     const packageJSON = require(`${process.cwd()}/package.json`);
 
     const projects = TWProjectUtilities.projectsWithArguments(args);
+    const pushData = args.includes('--data');
 
     // If extensions are specified, create a zip with them and upload them
     if (args.includes('--extensions')) {
@@ -72,6 +73,13 @@ export async function upload(push: boolean = false): Promise<void> {
             // Import either as an extension or a source control entities
             if (project.kind == TWProjectKind.XML && push) {
                 await uploadSourceControlledZip(`${cwd}/zip/projects/`, zipName, project.name);
+
+                // If the --data flag was specified, also import data files
+                if (pushData && project.data.length > 0) {
+                    for (const dataConfig of project.data) {
+                        await pushDataFile(project.path, dataConfig);
+                    }
+                }
             }
             else {
                 await uploadExtension(`${cwd}/zip/projects/${zipName}`, project.name);
@@ -254,4 +262,26 @@ function formattedUploadStatus(response): string {
         // that may be printed directly.
         return response;
     }
+}
+
+/**
+ * Imports a local data file into ThingWorx using the DataImporter endpoint.
+ * @param projectPath   The root path of the local project folder.
+ * @param dataConfig    The data import configuration entry.
+ */
+async function pushDataFile(projectPath: string, dataConfig: TWDataConfig): Promise<void> {
+    const { entityType, entityName, file } = dataConfig;
+    const localPath = Path.join(projectPath, file);
+
+    if (!FS.existsSync(localPath)) {
+        process.stdout.write(`\x1b[1;33m⚠\x1b[0m Skipping data import for ${entityType}/${entityName}: file not found at ${localPath}\n`);
+        return;
+    }
+
+    process.stdout.write(`\x1b[2m❯\x1b[0m Importing data ${entityType}/${entityName} to ${TWClient.server}`);
+
+    const fileName = Path.basename(localPath);
+    await TWClient.dataImport(Path.dirname(localPath), fileName);
+
+    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Imported data ${entityType}/${entityName} to ${TWClient.server} \n`);
 }

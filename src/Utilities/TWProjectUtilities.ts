@@ -18,6 +18,28 @@ export enum TWProjectKind {
 } 
 
 /**
+ * Describes a data file that should be exported from / imported to ThingWorx
+ * alongside the project's entities when using the --data flag.
+ */
+export interface TWDataConfig {
+
+    /**
+     * The TWX entity type that owns the data (e.g. "Things", "Blogs", "DataTables").
+     */
+    entityType: string;
+
+    /**
+     * The name of the TWX entity whose data should be exported/imported.
+     */
+    entityName: string;
+
+    /**
+     * Local file path relative to the project folder where the data file is stored.
+     */
+    file: string;
+}
+
+/**
  * An interface that describes a project in a multi-project repository.
  */
 export interface TWProject {
@@ -42,6 +64,12 @@ export interface TWProject {
      * The type of project, determined by the presence of the tsconfig.json file
      */
     kind: TWProjectKind;
+
+    /**
+     * Data files to export/import alongside entities when the --data flag is specified.
+     * Only applicable to XML projects.
+     */
+    data: TWDataConfig[];
 }
 
 /**
@@ -113,7 +141,7 @@ export class TWProjectUtilities {
             if (fs.lstatSync(path).isDirectory()) {
                 if(fs.existsSync(`${path}/tsconfig.json`)) {
                     // If a tsconfig.json file is found, then the project contains typescript entities
-                    projects.push({name: projectName, projectNames: [projectName], path, kind: TWProjectKind.TypeScript});
+                    projects.push({name: projectName, projectNames: [projectName], path, kind: TWProjectKind.TypeScript, data: []});
                 } else if(fs.existsSync(`${path}/twconfig.json`)) {
                     // If only a twconfig.json is found, then assume it's XML only
                     // The twconfig.json may specify multiple TWX project names via a "projects" array
@@ -121,7 +149,8 @@ export class TWProjectUtilities {
                     const projectNames: string[] = Array.isArray(folderTwConfig.projects) && folderTwConfig.projects.length > 0
                         ? folderTwConfig.projects
                         : [projectName];
-                    projects.push({name: projectName, projectNames, path, kind: TWProjectKind.XML});
+                    const data: TWDataConfig[] = Array.isArray(folderTwConfig.data) ? folderTwConfig.data : [];
+                    projects.push({name: projectName, projectNames, path, kind: TWProjectKind.XML, data});
                 }
             }
         }

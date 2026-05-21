@@ -1,3 +1,28 @@
+# 2.3.2
+
+Adds support for data file import/export via the `--data` flag. A `twconfig.json` in an XML project folder can now include a `data` array describing entity data that should travel with the project. Each entry specifies an `entityType`, `entityName`, and a `file` path (relative to the project folder) where the data will be stored locally.
+
+Running `pnpm pull --xml --data` exports each entry from ThingWorx via the DataExporter endpoint and writes it to the configured local path. Running `pnpm push --data` reads those files back and uploads them to ThingWorx via the DataImporter endpoint.
+
+Example `twconfig.json`:
+
+```json
+{
+    "projects": ["MyProject.PRJ", "MyOtherProject.PRJ"],
+    "data": [
+        {
+            "entityType": "DataTables",
+            "entityName": "MyConfig.DT",
+            "file": "data/MyConfig.DT.twx"
+        }
+    ]
+}
+```
+
+# 2.3.1
+
+This release contains no changes to the codebase, but was required because of a bad npm publish of 2.3.0 that included the wrong files.
+
 # 2.3.0
 
 Adds support for multi-project XML folders. A `twconfig.json` in an XML project folder can now specify a `projects` array listing multiple ThingWorx project names that the folder represents. When pulling, all listed projects are fetched and their entities merged into the same `src` directory. When pushing, the folder contents are uploaded as before. Folders without a `projects` array continue to use the folder name as the single project name.

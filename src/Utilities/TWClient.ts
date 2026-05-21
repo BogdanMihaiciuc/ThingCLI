@@ -151,11 +151,12 @@ export class TWClient {
         options.url = `${host}/Thingworx/${options.url}`;
 
         // Automatically add the thingworx specific headers to options
-        const headers = Object.assign({}, options.headers || {}, {
+        // options.headers is merged last (before auth) so callers can override defaults like Accept
+        const headers = Object.assign({}, {
             'X-XSRF-TOKEN': 'TWX-XSRF-TOKEN-VALUE',
             'X-THINGWORX-SESSION': 'true',
             Accept: 'application/json',
-        }, this._authenticationHeaders);
+        }, options.headers || {}, this._authenticationHeaders);
 
         const fetchOptions: RequestInit = { method, headers };
 
@@ -530,5 +531,55 @@ export class TWClient {
     static async downloadFile(fileUrl: string, targetPath: string): Promise<void> {
         const response = await fetch(fileUrl, { headers: this._authenticationHeaders });
         fs.writeFileSync(targetPath, Buffer.from(await (await response.blob()).arrayBuffer()));
+    }
+
+    /**
+     * Exports data from a ThingWorx entity using the DataExporter endpoint.
+     * @param entityType    The entity type (e.g. "Things", "Blogs", "DataTables").
+     * @param entityName    The name of the entity whose data should be exported.
+     * @returns             A promise that resolves with the exported data as a string when the operation completes.
+     */
+    static async dataExport(entityType: string, entityName: string): Promise<string> {
+        try {
+            const response = await this._performRequest({
+                url: `DataExporter/${entityType}/${entityName}?exportMatchingModelTags=true&universal=`,
+                headers: { Accept: 'application/octet-stream' },
+            }, 'get');
+
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+
+            return response.body;
+        }
+        catch (err) {
+            throw new Error(`Error exporting data for '${entityType}/${entityName}' because: ${err}`);
+        }
+    }
+
+    /**
+     * Imports a data file into ThingWorx using the DataImporter endpoint.
+     * @param fileBuffer    The contents of the file to import.
+     * @param filePath      Local path to the folder the file is in.
+     * @param fileName      The name of the file to import.
+     * @returns             A promise that resolves when the operation completes.
+     */
+    static async dataImport(filePath: string, fileName: string): Promise<void> {
+        try {
+            const formData = new FormData();
+            formData.append('file', new Blob([fs.readFileSync(Path.join(filePath, fileName))]), fileName);
+
+            const response = await this._performRequest({
+                url: `DataImporter?purpose=import&overwritePropertyValues=true&IgnoreBadValueStreamData=false&WithSubsystems=false&usedefaultdataprovider=false`,
+                formData,
+            });
+
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+        }
+        catch (err) {
+            throw new Error(`Error importing data file '${fileName}' because: ${err}`);
+        }
     }
 }
