@@ -90,10 +90,9 @@ async function pullDataFile(projectPath: string, dataConfig: TWDataConfig) {
     const { entityType, entityName, file } = dataConfig;
     process.stdout.write(`\x1b[2m❯\x1b[0m Exporting data ${entityType}/${entityName} from ${TWClient.server}`);
 
-    const body = await TWClient.dataExport(entityType, entityName);
     const localPath = Path.join(projectPath, file);
     TWProjectUtilities.ensurePath(Path.dirname(localPath), Path.dirname(localPath));
-    FS.writeFileSync(localPath, body, 'utf8');
+    await TWClient.dataExport(entityType, entityName, localPath);
 
     process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Exported data ${entityType}/${entityName} from ${TWClient.server} to ${localPath} \n`);
 }
