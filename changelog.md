@@ -1,19 +1,40 @@
-# 2.3.2
+# 2.4.0
 
-Adds support for data file import/export via the `--data` flag. A `twconfig.json` in an XML project folder can now include a `data` array describing entity data that should travel with the project. Each entry specifies an `entityType`, `entityName`, and a `file` path (relative to the project folder) where the data will be stored locally.
+Adds support for two categories of entity data files, managed separately by two sets of commands:
 
-Running `pnpm pull --xml --data` exports each entry from ThingWorx via the DataExporter endpoint and writes it to the configured local path. Running `pnpm push --data` reads those files back and uploads them to ThingWorx via the DataImporter endpoint.
+**Seed data** (`seed` array in `twconfig.json`) is committed to source control alongside entity definitions and represents the project's required configuration or initial state. Seed files travel with the project and are exported/imported using the `--seed` flag on `pull` and `push`:
+
+```bash
+pnpm pull --xml --seed    # export seed data from ThingWorx to local files
+pnpm push --seed          # import seed data from local files into ThingWorx
+```
+
+**Runtime data** (`data` array in `twconfig.json`) is gitignored and represents environment-specific data for migrations. These files are managed via dedicated commands:
+
+```bash
+pnpm data-pull            # export runtime data from ThingWorx to local files
+pnpm data-push            # import runtime data from local files into ThingWorx
+```
+
+Both arrays use the same entry format — `entityType`, `entityName`, and `file` (path relative to the project folder). Export uses the DataExporter async polling flow; import uses the DataImporter endpoint.
 
 Example `twconfig.json`:
 
 ```json
 {
     "projects": ["MyProject.PRJ", "MyOtherProject.PRJ"],
-    "data": [
+    "seed": [
         {
             "entityType": "DataTables",
             "entityName": "MyConfig.DT",
-            "file": "data/MyConfig.DT.twx"
+            "file": "seed/MyConfig.DT.twx"
+        }
+    ],
+    "data": [
+        {
+            "entityType": "DataTables",
+            "entityName": "MyRuntimeData.DT",
+            "file": "data/MyRuntimeData.DT.twx"
         }
     ]
 }

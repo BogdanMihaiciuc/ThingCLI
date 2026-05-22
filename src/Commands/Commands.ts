@@ -83,4 +83,17 @@ export const enum Commands {
      * The help command displays information about a command.
      */
     help = 'help',
+
+    /**
+     * The data-pull command pulls runtime data files from ThingWorx into local project folders.
+     * Reads the `data` array from each XML project's twconfig.json. These files are gitignored
+     * and are intended for environment-to-environment data migrations.
+     */
+    dataPull = 'data-pull',
+
+    /**
+     * The data-push command pushes runtime data files from local project folders to ThingWorx.
+     * Reads the `data` array from each XML project's twconfig.json.
+     */
+    dataPush = 'data-push',
 }

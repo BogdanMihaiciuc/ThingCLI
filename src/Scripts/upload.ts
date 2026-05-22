@@ -28,7 +28,7 @@ export async function upload(push: boolean = false): Promise<void> {
     const packageJSON = require(`${process.cwd()}/package.json`);
 
     const projects = TWProjectUtilities.projectsWithArguments(args);
-    const pushData = args.includes('--data');
+    const pushSeed = args.includes('--seed');
 
     // If extensions are specified, create a zip with them and upload them
     if (args.includes('--extensions')) {
@@ -74,9 +74,9 @@ export async function upload(push: boolean = false): Promise<void> {
             if (project.kind == TWProjectKind.XML && push) {
                 await uploadSourceControlledZip(`${cwd}/zip/projects/`, zipName, project.name);
 
-                // If the --data flag was specified, also import data files
-                if (pushData && project.data.length > 0) {
-                    for (const dataConfig of project.data) {
+                // If the --seed flag was specified, also import seed data files
+                if (pushSeed && project.seed.length > 0) {
+                    for (const dataConfig of project.seed) {
                         await pushDataFile(project.path, dataConfig);
                     }
                 }
