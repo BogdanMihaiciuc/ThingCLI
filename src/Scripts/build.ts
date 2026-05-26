@@ -124,7 +124,7 @@ export async function build(push: boolean = false): Promise<DeploymentEndpoint[]
     else {
         // If running in single project mode, run against the whole repository, and assume it's typescript
         const outPath = `${cwd}/build`;
-        buildProject({ name: twConfig.projectName, projectNames: [twConfig.projectName], path: cwd, kind: TWProjectKind.TypeScript, parentProjects: [], seed: [], data: [] }, outPath);
+        buildProject({ name: twConfig.projectName, projectNames: [twConfig.projectName], path: cwd, kind: TWProjectKind.TypeScript, parentProjects: [], data: [], runtimeData: [] }, outPath);
     }
 
     /**

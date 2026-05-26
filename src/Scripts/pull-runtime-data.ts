@@ -7,10 +7,10 @@ const [, , , ...args] = process.argv;
 
 /**
  * Pulls runtime data files from ThingWorx into the local project folders.
- * Reads the `data` array from each XML project's twconfig.json. These files are gitignored
+ * Reads the `runtimeData` array from each XML project's twconfig.json. These files are gitignored
  * and represent environment-specific migration data.
  */
-export async function dataPull(): Promise<void> {
+export async function pullRuntimeData(): Promise<void> {
     const twConfig = require(`${process.cwd()}/twconfig.json`) as TWConfig;
     const projects = TWProjectUtilities.projectsWithArguments(args);
 
@@ -18,15 +18,15 @@ export async function dataPull(): Promise<void> {
         for (const project of TWProjectUtilities.projects()) {
             if (projects && !projects.includes(project.name)) continue;
 
-            if (project.kind == TWProjectKind.XML && project.data.length > 0) {
-                for (const dataConfig of project.data) {
+            if (project.kind == TWProjectKind.XML && project.runtimeData.length > 0) {
+                for (const dataConfig of project.runtimeData) {
                     await pullDataFile(project.path, dataConfig);
                 }
             }
         }
     }
     else {
-        throw new Error('data-pull is only supported in multi-project mode.');
+        throw new Error('pull-runtime-data is only supported in multi-project mode.');
     }
 }
 

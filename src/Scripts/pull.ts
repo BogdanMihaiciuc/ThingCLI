@@ -20,7 +20,7 @@ export async function pull(): Promise<void> {
     }
 
     const projects = TWProjectUtilities.projectsWithArguments(args);
-    const pullSeed = args.includes('--seed');
+    const pullData = args.includes('--data');
 
     if (twConfig.projectName == '@auto') {
         // In multi-project mode, export each xml-only project
@@ -35,9 +35,9 @@ export async function pull(): Promise<void> {
                     await pullProjectToFolder(Path.join(project.path, 'src'), projectName);
                 }
 
-                // If the --seed flag was specified, also export seed data files
-                if (pullSeed && project.seed.length > 0) {
-                    for (const dataConfig of project.seed) {
+                // If the --data flag was specified, also export data files
+                if (pullData && project.data.length > 0) {
+                    for (const dataConfig of project.data) {
                         await pullDataFile(project.path, dataConfig);
                     }
                 }

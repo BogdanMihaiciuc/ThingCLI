@@ -66,18 +66,18 @@ export interface TWProject {
     kind: TWProjectKind;
 
     /**
-     * Seed data files to export/import alongside entities when the --seed flag is specified.
+     * Data files to export/import alongside entities when the --data flag is specified.
      * These are committed to source control and represent configuration/initial state.
      * Only applicable to XML projects.
      */
-    seed: TWDataConfig[];
+    data: TWDataConfig[];
 
     /**
-     * Runtime data files to export/import via the data-pull / data-push commands.
+     * Runtime data files to export/import via the pull-runtime-data / push-runtime-data commands.
      * These are gitignored and represent environment-specific data for migrations.
      * Only applicable to XML projects.
      */
-    data: TWDataConfig[];
+    runtimeData: TWDataConfig[];
 }
 
 /**
@@ -149,7 +149,7 @@ export class TWProjectUtilities {
             if (fs.lstatSync(path).isDirectory()) {
                 if(fs.existsSync(`${path}/tsconfig.json`)) {
                     // If a tsconfig.json file is found, then the project contains typescript entities
-                    projects.push({name: projectName, projectNames: [projectName], path, kind: TWProjectKind.TypeScript, seed: [], data: []});
+                    projects.push({name: projectName, projectNames: [projectName], path, kind: TWProjectKind.TypeScript, data: [], runtimeData: []});
                 } else if(fs.existsSync(`${path}/twconfig.json`)) {
                     // If only a twconfig.json is found, then assume it's XML only
                     // The twconfig.json may specify multiple TWX project names via a "projects" array
@@ -157,9 +157,9 @@ export class TWProjectUtilities {
                     const projectNames: string[] = Array.isArray(folderTwConfig.projects) && folderTwConfig.projects.length > 0
                         ? folderTwConfig.projects
                         : [projectName];
-                    const seed: TWDataConfig[] = Array.isArray(folderTwConfig.seed) ? folderTwConfig.seed : [];
                     const data: TWDataConfig[] = Array.isArray(folderTwConfig.data) ? folderTwConfig.data : [];
-                    projects.push({name: projectName, projectNames, path, kind: TWProjectKind.XML, seed, data});
+                    const runtimeData: TWDataConfig[] = Array.isArray(folderTwConfig.runtimeData) ? folderTwConfig.runtimeData : [];
+                    projects.push({name: projectName, projectNames, path, kind: TWProjectKind.XML, data, runtimeData});
                 }
             }
         }

@@ -2,18 +2,18 @@
 
 Adds support for two categories of entity data files, managed separately by two sets of commands:
 
-**Seed data** (`seed` array in `twconfig.json`) is committed to source control alongside entity definitions and represents the project's required configuration or initial state. Seed files travel with the project and are exported/imported using the `--seed` flag on `pull` and `push`:
+**Data** (`data` array in `twconfig.json`) is committed to source control alongside entity definitions and represents the project's required configuration or initial state. Data files travel with the project and are exported/imported using the `--data` flag on `pull` and `push`:
 
 ```bash
-pnpm pull --xml --seed    # export seed data from ThingWorx to local files
-pnpm push --seed          # import seed data from local files into ThingWorx
+pnpm pull --xml --data    # export data from ThingWorx to local files
+pnpm push --data          # import data from local files into ThingWorx
 ```
 
-**Runtime data** (`data` array in `twconfig.json`) is gitignored and represents environment-specific data for migrations. These files are managed via dedicated commands:
+**Runtime data** (`runtimeData` array in `twconfig.json`) is gitignored and represents environment-specific data for migrations. These files are managed via dedicated commands:
 
 ```bash
-pnpm data-pull            # export runtime data from ThingWorx to local files
-pnpm data-push            # import runtime data from local files into ThingWorx
+pnpm pull-runtime-data    # export runtime data from ThingWorx to local files
+pnpm push-runtime-data    # import runtime data from local files into ThingWorx
 ```
 
 Both arrays use the same entry format — `entityType`, `entityName`, and `file` (path relative to the project folder). Export uses the DataExporter async polling flow; import uses the DataImporter endpoint.
@@ -23,18 +23,18 @@ Example `twconfig.json`:
 ```json
 {
     "projects": ["MyProject.PRJ", "MyOtherProject.PRJ"],
-    "seed": [
-        {
-            "entityType": "DataTables",
-            "entityName": "MyConfig.DT",
-            "file": "seed/MyConfig.DT.twx"
-        }
-    ],
     "data": [
         {
             "entityType": "DataTables",
+            "entityName": "MyConfig.DT",
+            "file": "data/MyConfig.DT.twx"
+        }
+    ],
+    "runtimeData": [
+        {
+            "entityType": "DataTables",
             "entityName": "MyRuntimeData.DT",
-            "file": "data/MyRuntimeData.DT.twx"
+            "file": "runtimeData/MyRuntimeData.DT.twx"
         }
     ]
 }
