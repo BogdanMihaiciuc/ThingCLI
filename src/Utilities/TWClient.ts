@@ -151,11 +151,12 @@ export class TWClient {
         options.url = `${host}/Thingworx/${options.url}`;
 
         // Automatically add the thingworx specific headers to options
-        const headers = Object.assign({}, options.headers || {}, {
+        // options.headers is merged last (before auth) so callers can override defaults like Accept
+        const headers = Object.assign({}, {
             'X-XSRF-TOKEN': 'TWX-XSRF-TOKEN-VALUE',
             'X-THINGWORX-SESSION': 'true',
             Accept: 'application/json',
-        }, this._authenticationHeaders);
+        }, options.headers || {}, this._authenticationHeaders);
 
         const fetchOptions: RequestInit = { method, headers };
 
@@ -530,5 +531,127 @@ export class TWClient {
     static async downloadFile(fileUrl: string, targetPath: string): Promise<void> {
         const response = await fetch(fileUrl, { headers: this._authenticationHeaders });
         fs.writeFileSync(targetPath, Buffer.from(await (await response.blob()).arrayBuffer()));
+    }
+
+    /**
+     * Exports data from a ThingWorx entity to a local file via the DataExporter endpoint.
+     * The export is asynchronous — this method polls the file repository until the export completes (signalled by a `.chk` file), then downloads the result and cleans up.
+     * @param entityType    The entity type (e.g. "DataTables").
+     * @param entityName    The name of the entity whose data should be exported.
+     * @param localPath     Absolute local path where the downloaded file should be written.
+     * @returns             A promise that resolves when the file has been written locally.
+     */
+    static async dataExport(entityType: string, entityName: string, localPath: string): Promise<void> {
+        const repositoryName = process.env.THINGWORX_REPO ?? 'SystemRepository';
+        const exportPath = `/${entityName}`;
+        const { thingworxServer: host } = this._connectionDetails;
+
+        try {
+            // Step 1: Trigger the async export into the file repository
+            const exportResponse = await this._performRequest({
+                url: `DataExporter/${entityType}/${entityName}?exportMatchingModelTags=true&path=${encodeURIComponent(exportPath)}&repositoryName=${encodeURIComponent(repositoryName)}&universal=`,
+                headers: { Accept: 'application/octet-stream' },
+            }, 'get');
+
+            if (exportResponse.statusCode != 200) {
+                throw new Error(`Got status code ${exportResponse.statusCode} (${exportResponse.statusMessage}). Body: ${exportResponse.body}`);
+            }
+
+            const startTime = Date.now();
+            const deadline = startTime + 60_000;
+            const elapsed = () => `${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+            const status = (msg: string) => process.stdout.write(`\r\x1b[2m❯\x1b[0m Exporting data ${entityType}/${entityName}: ${msg}`);
+
+            // Step 2: Poll GetDataExportListing until the timestamped export folder appears.
+            // This service lists the export directories created by DataExporter for a given path.
+            let timestampFolder: string | undefined;
+
+            while (Date.now() < deadline) {
+                const listResponse = await this._performRequest({
+                    url: `Things/${repositoryName}/Services/GetDataExportListing`,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: { path: entityName },
+                });
+
+                if (listResponse.statusCode == 200) {
+                    const rows: any[] = JSON.parse(listResponse.body)?.rows ?? [];
+                    if (rows.length > 0) {
+                        timestampFolder = rows[0].name;
+                        break;
+                    }
+                }
+
+                status(`waiting for export to start... (${elapsed()})`);
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            if (!timestampFolder) {
+                throw new Error('Timed out waiting for the export folder to appear in the repository');
+            }
+
+            // Step 3: Poll GetFileListingWithLinks at the deep data folder until the .chk
+            // sentinel file appears, indicating the export has finished writing.
+            const dataFolderPath = `${exportPath}/${timestampFolder}/${entityType}/${entityName}`;
+            let exportComplete = false;
+
+            while (Date.now() < deadline) {
+                const listResponse = await this._performRequest({
+                    url: `Things/${repositoryName}/Services/GetFileListingWithLinks`,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: { path: dataFolderPath },
+                });
+
+                if (listResponse.statusCode == 200) {
+                    const rows: any[] = JSON.parse(listResponse.body)?.rows ?? [];
+                    if (rows.some((r: any) => String(r.name).endsWith('.chk'))) {
+                        exportComplete = true;
+                        break;
+                    }
+                }
+
+                status(`waiting for export to complete... (${elapsed()})`);
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            if (!exportComplete) {
+                throw new Error('Timed out waiting for the export to complete');
+            }
+
+            // Step 4: Download the exported data file
+            const downloadUrl = `${host}/Thingworx/FileRepositories/${repositoryName}${dataFolderPath}/data-0.twx`;
+            await this.downloadFile(downloadUrl, localPath);
+
+            // Step 5: Clean up the remote export folder
+            await this.deleteRemoteDirectory(repositoryName, exportPath);
+        }
+        catch (err) {
+            throw new Error(`Error exporting data for '${entityType}/${entityName}' because: ${err}`);
+        }
+    }
+
+    /**
+     * Imports a data file into ThingWorx using the DataImporter endpoint.
+     * @param fileBuffer    The contents of the file to import.
+     * @param filePath      Local path to the folder the file is in.
+     * @param fileName      The name of the file to import.
+     * @returns             A promise that resolves when the operation completes.
+     */
+    static async dataImport(filePath: string, fileName: string): Promise<void> {
+        try {
+            const formData = new FormData();
+            formData.append('file', new Blob([fs.readFileSync(Path.join(filePath, fileName))]), fileName);
+
+            const response = await this._performRequest({
+                url: `DataImporter?purpose=import&overwritePropertyValues=true&IgnoreBadValueStreamData=false&WithSubsystems=false&usedefaultdataprovider=false`,
+                formData,
+            });
+
+            if (response.statusCode != 200) {
+                throw new Error(`Got status code ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+            }
+        }
+        catch (err) {
+            throw new Error(`Error importing data file '${fileName}' because: ${err}`);
+        }
     }
 }

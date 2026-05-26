@@ -1,3 +1,49 @@
+# 2.4.0
+
+Adds support for two categories of entity data files, managed separately by two sets of commands:
+
+**Data** (`data` array in `twconfig.json`) is committed to source control alongside entity definitions and represents the project's required configuration or initial state. Data files travel with the project and are exported/imported using the `--data` flag on `pull` and `push`:
+
+```bash
+pnpm pull --xml --data    # export data from ThingWorx to local files
+pnpm push --data          # import data from local files into ThingWorx
+```
+
+**Runtime data** (`runtimeData` array in `twconfig.json`) is gitignored and represents environment-specific data for migrations. These files are managed via dedicated commands:
+
+```bash
+pnpm pull-runtime-data    # export runtime data from ThingWorx to local files
+pnpm push-runtime-data    # import runtime data from local files into ThingWorx
+```
+
+Both arrays use the same entry format — `entityType`, `entityName`, and `file` (path relative to the project folder). Export uses the DataExporter async polling flow; import uses the DataImporter endpoint.
+
+Example `twconfig.json`:
+
+```json
+{
+    "projects": ["MyProject.PRJ", "MyOtherProject.PRJ"],
+    "data": [
+        {
+            "entityType": "DataTables",
+            "entityName": "MyConfig.DT",
+            "file": "data/MyConfig.DT.twx"
+        }
+    ],
+    "runtimeData": [
+        {
+            "entityType": "DataTables",
+            "entityName": "MyRuntimeData.DT",
+            "file": "runtimeData/MyRuntimeData.DT.twx"
+        }
+    ]
+}
+```
+
+# 2.3.1
+
+This release contains no changes to the codebase, but was required because of a bad npm publish of 2.3.0 that included the wrong files.
+
 # 2.3.0
 
 Adds support for multi-project XML folders. A `twconfig.json` in an XML project folder can now specify a `projects` array listing multiple ThingWorx project names that the folder represents. When pulling, all listed projects are fetched and their entities merged into the same `src` directory. When pushing, the folder contents are uploaded as before. Folders without a `projects` array continue to use the folder name as the single project name.

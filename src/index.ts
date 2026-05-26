@@ -15,6 +15,8 @@ import { init } from './Scripts/init';
 import { upgrade } from './Scripts/upgrade';
 import { generateAPI } from './Scripts/generate-api';
 import { pull } from './Scripts/pull';
+import { pullRuntimeData } from './Scripts/pull-runtime-data';
+import { pushRuntimeData } from './Scripts/push-runtime-data';
 import { help } from './Scripts/help';
 import * as fs from 'fs';
 import 'dotenv/config';
@@ -105,6 +107,12 @@ async function main() {
         case Commands.pull:
             await pull();
             break;
+        case Commands.pullRuntimeData:
+            await pullRuntimeData();
+            break;
+        case Commands.pushRuntimeData:
+            await pushRuntimeData();
+            break;
         case Commands.help:
             // If used without an argument, just display the generic information
             if (args.length) {
@@ -146,8 +154,8 @@ Available commands:
  * \x1b[1mdeploy\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--projects]
    Uploads the extension then runs deployment scripts
 
- * \x1b[1mpush\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--projects]
-   Builds and uploads the thingworx extension for typescript projects and uploads xml projects as editable entities
+ * \x1b[1mpush\x1b[0m [--merged] [--separate] [--debug] [--trace] [--extensions] [--remove] [--retain-version] [--data] [--projects]
+   Builds and uploads the thingworx extension for typescript projects and uploads xml projects as editable entities. Use --data to also import data files.
 
  * \x1b[1mremove\x1b[0m [--merged] [--separate]
    Removes the thingworx extension
@@ -161,8 +169,15 @@ Available commands:
  * \x1b[1madd-project\x1b[0m [--ui]
    Adds a new project to the repository
 
- * \x1b[1mpull\x1b[0m --xml [--projects]
-   Pulls xml projects from the thingworx server 
+ * \x1b[1mpull\x1b[0m --xml [--data] [--projects]
+   Pulls xml projects from the thingworx server. Use --data to also export data files. 
+
+ * \x1b[1mpull-runtime-data\x1b[0m [--projects]
+   Exports runtime data files (the \`runtimeData\` array in each project's twconfig.json) from ThingWorx.
+   These files are gitignored and represent environment-specific migration data.
+
+ * \x1b[1mpush-runtime-data\x1b[0m [--projects]
+   Imports runtime data files (the \`runtimeData\` array in each project's twconfig.json) into ThingWorx.
 
  * \x1b[1mgenerate-api\x1b[0m
    EXPERIMENTAL: Builds declarations out of exported entities that can be used in other projects

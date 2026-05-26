@@ -12,6 +12,72 @@ To use it, run `npm install --save-dev bm-thing-cli` then run any of the availab
 
 The available commands are detailed below:
 
+## Repository Layout
+
+There are two kinds of projects that `bm-thing-cli` understands:
+
+- **TypeScript projects** — source lives in `src/`, is compiled to a ThingWorx extension package, and deployed via `upload` / `push` / `deploy`.
+- **XML projects** — folders that store raw ThingWorx entity XML, pulled from and pushed to a server directly via source control (no compilation step).
+
+### Single TypeScript project
+
+A basic repository has a single `twconfig.json` at the root:
+
+```
+MyProject/
+├── package.json
+├── twconfig.json       // { "projectName": "MyProject" }
+└── src/                // TypeScript source files
+```
+
+### Multi-project repository
+
+When multiple projects share a repository, each lives in its own subfolder under `src/`. TypeScript and XML projects can coexist:
+
+```
+MyRepo/
+├── package.json
+├── twconfig.json               // { "projects": [...] }
+└── src/
+    ├── MyTsProject/            // TypeScript project
+    │   ├── twconfig.json
+    │   └── src/
+    └── MyXmlProject/           // XML project
+        ├── twconfig.json
+        ├── src/                // entity XML files
+        └── data/               // optional: entity data files
+```
+
+### XML project `twconfig.json`
+
+An XML project folder's `twconfig.json` supports two optional arrays in addition to the standard fields:
+
+- **`projects`** — maps the folder to one or more ThingWorx project names. All listed projects are exported/imported together. If omitted, the folder name is used as the sole project name.
+- **`data`** — declares entity data files (DataTables, Streams, etc.) that are committed to source control alongside entity definitions. These travel with the project and represent its required configuration/initial state. Each entry specifies an `entityType`, `entityName`, and a `file` path relative to the project folder.
+- **`runtimeData`** — declares entity data files that are **gitignored** and represent environment-specific runtime or migration data. These are managed via the separate `pull-runtime-data` / `push-runtime-data` commands.
+
+```json
+{
+    "projects": ["MyProject.PRJ", "MyOtherProject.PRJ"],
+    "data": [
+        {
+            "entityType": "DataTables",
+            "entityName": "MyConfig.DT",
+            "file": "data/MyConfig.DT.twx"
+        }
+    ],
+    "runtimeData": [
+        {
+            "entityType": "DataTables",
+            "entityName": "MyRuntimeData.DT",
+            "file": "runtimeData/MyRuntimeData.DT.twx"
+        }
+    ]
+}
+```
+
+Data files are written to (and read from) the path specified in `file` when running `pull --data` and `push --data` respectively. Runtime data files are managed via `pull-runtime-data` and `push-runtime-data`.
+
 ## `declarations`
 
 Usage: 
@@ -51,18 +117,20 @@ twc build --projects=Project1,Project2
 ## `upload`
 Usage:
 ```bash
-npx twc upload [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--projects]
+npx twc upload [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--extensions] [--data] [--projects]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json.
 Arguments:
  - `--remove`: If specified, the current version of the extension(s) will be removed prior to installing the new version.
- - `--retain-version`: If specified, the version of the extension(s) in the `package.json` is not incremented. Useful if the version is driven out of external tools
+ - `--retain-version`: If specified, the version of the extension(s) in the `package.json` is not incremented. Useful if the version is driven out of external tools.
+ - `--extensions`: If specified, any `.zip` files in the local `extensions` folder will also be uploaded.
+ - `--data`: If specified, any data files declared in the project's `twconfig.json` (`data` array) will be uploaded to the server via the DataImporter endpoint.
 
 ## `deploy`
 Usage:
 ```bash
-npx twc deploy [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--projects]
+npx twc deploy [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--extensions] [--data] [--projects]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json. After the installation is complete, it runs the services marked with the `@deploy` decorator.
@@ -70,18 +138,44 @@ Builds a thingworx extension package from the typescript project, then imports i
 ## `push`
 Usage:
 ```bash
-npx twc push [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--projects]
+npx twc push [--merged|--separate] [--debug] [--trace] [--remove] [--retain-version] [--extensions] [--data] [--projects]
 ```
 
 Builds a thingworx extension package from the typescript project, then imports it on the server defined in either the environment or package.json, while uploading any XML projects as regular editable entities.
+Arguments:
+ - `--extensions`: If specified, any `.zip` files in the local `extensions` folder will also be uploaded.
+ - `--data`: If specified, any data files declared in the project's `twconfig.json` (`data` array) will be uploaded to the server via the DataImporter endpoint.
+
+XML project folders support a `projects` array in their `twconfig.json` to map a single local folder to multiple ThingWorx project names. All listed projects are uploaded together. See [2.3.0 changelog](#2.3.0) for details.
 
 ## `pull`
 Usage:
 ```bash
-npx twc pull [--projects]
+npx twc pull --xml [--data] [--projects]
 ```
 
 Pulls XML entities from the thingworx server for all local XML projects. If the `--projects` argument is specified, any projects included must also exist locally.
+Arguments:
+ - `--xml`: Required. Pulls entity XML from the server using source control export.
+ - `--data`: If specified, any data files declared in the project's `twconfig.json` (`data` array) will be downloaded from the server via the DataExporter endpoint and written to their configured local paths.
+
+## `pull-runtime-data`
+Usage:
+```bash
+npx twc pull-runtime-data [--projects]
+```
+
+Exports runtime data files from ThingWorx for all local XML projects. Reads the `runtimeData` array from each project's `twconfig.json`. These files are gitignored and represent environment-specific data for migrations.
+
+## `push-runtime-data`
+Usage:
+```bash
+npx twc push-runtime-data [--projects]
+```
+
+Imports runtime data files into ThingWorx for all local XML projects. Reads the `runtimeData` array from each project's `twconfig.json`.
+
+See [XML project `twconfig.json`](#xml-project-twnfig-json) above for how to configure multi-project folders and data file tracking.
 
 ## `remove`
 Usage:

@@ -1,7 +1,7 @@
 import * as FS from 'fs';
 import * as Path from 'path';
 import { TWConfig } from 'bm-thing-transformer';
-import { TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
+import { TWDataConfig, TWProjectKind, TWProjectUtilities } from '../Utilities/TWProjectUtilities';
 import { TWClient } from '../Utilities/TWClient';
 import AdmZip from 'adm-zip';
 
@@ -20,6 +20,7 @@ export async function pull(): Promise<void> {
     }
 
     const projects = TWProjectUtilities.projectsWithArguments(args);
+    const pullData = args.includes('--data');
 
     if (twConfig.projectName == '@auto') {
         // In multi-project mode, export each xml-only project
@@ -32,6 +33,13 @@ export async function pull(): Promise<void> {
             if (project.kind == TWProjectKind.XML) {
                 for (const projectName of project.projectNames) {
                     await pullProjectToFolder(Path.join(project.path, 'src'), projectName);
+                }
+
+                // If the --data flag was specified, also export data files
+                if (pullData && project.data.length > 0) {
+                    for (const dataConfig of project.data) {
+                        await pullDataFile(project.path, dataConfig);
+                    }
                 }
             }
         };
@@ -71,4 +79,20 @@ async function pullProjectToFolder(path: string, projectName: string) {
     await TWClient.deleteRemoteDirectory(repositoryName, `${repositoryPath}/${projectName}`);
 
     process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Exported ${projectName} from ${TWClient.server} to path ${path} \n`);
+}
+
+/**
+ * Exports a data file from ThingWorx and saves it to the local project folder.
+ * @param projectPath   The root path of the local project folder.
+ * @param dataConfig    The data export configuration entry.
+ */
+async function pullDataFile(projectPath: string, dataConfig: TWDataConfig) {
+    const { entityType, entityName, file } = dataConfig;
+    process.stdout.write(`\x1b[2m❯\x1b[0m Exporting data ${entityType}/${entityName} from ${TWClient.server}`);
+
+    const localPath = Path.join(projectPath, file);
+    TWProjectUtilities.ensurePath(Path.dirname(localPath), Path.dirname(localPath));
+    await TWClient.dataExport(entityType, entityName, localPath);
+
+    process.stdout.write(`\r\x1b[1;32m✔\x1b[0m Exported data ${entityType}/${entityName} from ${TWClient.server} to ${localPath} \n`);
 }
