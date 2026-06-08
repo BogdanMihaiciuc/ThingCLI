@@ -139,6 +139,35 @@ export class TWClient {
     };
 
     /**
+     * Resets the cached connection details so the next request reloads them from
+     * the current process environment or package.json.
+     */
+    static resetConnection(): void {
+        this._cachedConnectionDetails = undefined;
+        this._authenticationHeaders = undefined;
+    }
+
+    /**
+     * Overrides the current ThingWorx connection details for the running process.
+     * This is useful for scripts that need to talk to multiple environments in one run.
+     * @param details   The connection details to use.
+     */
+    static setConnectionDetails(details: TWPackageJSONConnectionDetails): void {
+        this._cachedConnectionDetails = details;
+
+        if (details.thingworxAppKey) {
+            this._authenticationHeaders = {appKey: details.thingworxAppKey};
+        }
+        else if (details.thingworxUser && details.thingworxPassword) {
+            const basicAuth = Buffer.from(details.thingworxUser + ':' + details.thingworxPassword).toString('base64');
+            this._authenticationHeaders = {Authorization: 'Basic ' + basicAuth};
+        }
+        else {
+            throw new Error('Unable to authorize a request to thingworx because an app key or username/password combo was not provided.');
+        }
+    }
+
+    /**
      * Performs a request, returning a promise that resolves with its response.
      * @param options       The requests's options.
      * @returns             A promise that resolves with the response when
@@ -213,18 +242,21 @@ export class TWClient {
     }
 
     /**
-     * Sends a POST request to the specified endpoint, with an empty body.
+     * Sends a request to the specified endpoint.
      * @param endpoint      The endpoint.
+     * @param body          Optional request body.
+     * @param method        The HTTP method. Defaults to `post`.
      * @returns             A promise that resolves with the server response when
      *                      the operation finishes.
      */
-    static async invokeEndpoint(endpoint: string): Promise<TWClientResponse> {
+    static async invokeEndpoint(endpoint: string, body?: string | Record<string, any>, method: 'get' | 'post' = 'post'): Promise<TWClientResponse> {
         return await this._performRequest({
             url: endpoint,
             headers: {
                 'Content-Type': 'application/json'
-            }
-        });
+            },
+            body,
+        }, method);
     }
 
     /**
@@ -282,6 +314,73 @@ export class TWClient {
                 searchText: ''
             })
         });
+    }
+
+    /**
+     * Invokes a Thing service with an optional JSON payload.
+     * @param thingName      The Thing name.
+     * @param serviceName    The service to invoke.
+     * @param parameters     Optional service parameters.
+     * @returns             The raw ThingWorx response.
+     */
+    static async invokeThingService(thingName: string, serviceName: string, parameters: Record<string, any> = {}): Promise<TWClientResponse> {
+        const response = await this._performRequest({
+            url: `Things/${encodeURIComponent(thingName)}/Services/${encodeURIComponent(serviceName)}`,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: parameters,
+        });
+
+        if (response.statusCode != 200) {
+            throw new Error(`Unable to invoke Thing service ${thingName}.${serviceName} because ThingWorx returned ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+        }
+
+        return response;
+    }
+
+    /**
+     * Exports the specified entity into a local XML file using the ThingWorx exporter endpoint.
+     * @param entityType    The ThingWorx collection, such as `Users`, `Groups`, or `Things`.
+     * @param entityName    The entity name to export.
+     * @param localPath     The local path where the exported file should be written.
+     */
+    static async exportEntity(entityType: string, entityName: string, localPath: string): Promise<void> {
+        const {thingworxServer: host} = this._connectionDetails;
+        const url = `${host}/Thingworx/Exporter/${entityType}/${encodeURIComponent(entityName)}?repositoryName=&universal=password&exportMatchingModelTags=true`;
+        const response = await fetch(url, {
+            headers: {
+                Accept: 'text/xml',
+                ...this._authenticationHeaders,
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Unable to export ${entityType}/${entityName} because ThingWorx returned ${response.status} (${response.statusText}).`);
+        }
+
+        fs.writeFileSync(localPath, Buffer.from(await response.arrayBuffer()));
+    }
+
+    /**
+     * Imports a local entity file using ThingWorx's Importer endpoint.
+     * @param filePath      Absolute or relative path to the local file to import.
+     */
+    static async importEntityFile(filePath: string): Promise<void> {
+        const formData = new FormData();
+        formData.append('file', new Blob([fs.readFileSync(filePath)], {type: 'text/xml'}), Path.basename(filePath));
+
+        const response = await this._performRequest({
+            url: 'Importer?IgnoreBadValueStreamData=false&WithSubsystems=false&overwritePropertyValues=true&purpose=import&usedefaultdataprovider=false',
+            headers: {
+                Accept: '*/*'
+            },
+            formData,
+        });
+
+        if (response.statusCode != 200) {
+            throw new Error(`Unable to import entity file '${filePath}' because ThingWorx returned ${response.statusCode} (${response.statusMessage}). Body: ${response.body}`);
+        }
     }
 
     /**
