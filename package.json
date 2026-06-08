@@ -1,13 +1,21 @@
 {
     "name": "bm-thing-cli",
-    "version": "2.4.0",
+    "version": "2.5.0",
     "description": "Command line tools for the Thingworx VSCode Project",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./package.json": "./package.json"
+    },
     "bin": {
-        "twc": "dist/index.js"
+        "twc": "dist/CLI.js"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "./scripts/clean.js && tsc -p tsconfig.json && chmod +x dist/index.js"
+        "build": "./scripts/clean.js && tsc -p tsconfig.json && chmod +x dist/CLI.js"
     },
     "keywords": [
         "thingworx",
@@ -35,6 +43,4 @@
         "enquirer": "^2.3.6",
         "typescript": "5.4.5",
         "xml2js": "^0.6.2"
-    },
-    "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a"
-}
+    }}
