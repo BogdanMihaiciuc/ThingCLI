@@ -1,3 +1,13 @@
+# 2.5.1
+
+Updates to transformer 2.2.1. For more information, see [2.2.1](https://github.com/BogdanMihaiciuc/ThingTransformer/releases/tag/2.2.1).
+
+Resolves an issue where projects created via the `init` command did not include the appropriate `tsconfig` configuration for defining mashup files. It is still recommended to have a separate sub-project for mashups.
+
+# 2.5.0
+
+Exposes several classes used by ThingCLI to be imported as dependencies in other projects.
+
 # 2.4.0
 
 Adds support for two categories of entity data files, managed separately by two sets of commands:
