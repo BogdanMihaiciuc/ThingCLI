@@ -371,6 +371,7 @@ function TSConfigDefault() {
             "./static/**/*.d.ts",
             "./src/**/*.d.ts",
             "./src/**/*.ts",
+            "./src/**/*.tsx",
             "./tw_imports/**/*.d.ts",
             "./node_modules/bm-thing-transformer/static/**/*.d.ts",
             "./node_modules/bm-thing-cli/node_modules/bm-thing-transformer/static/**/*.d.ts",
